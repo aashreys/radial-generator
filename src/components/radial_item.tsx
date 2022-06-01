@@ -3,15 +3,14 @@ import { Component, h } from "preact";
 import { MinusIcon } from "../icons/icon_minus";
 import { RadialConfig } from "../models/radial_config";
 
-export class RadialItem extends Component<{config: RadialConfig, onRemove: any, onConfigChange: any, style?: string}, RadialConfig> {
+export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: any, onConfigChange: any, style?: string}, RadialConfig> {
   
-  constructor(props: {config: RadialConfig, onConfigChange: any, onRemove: any, style?: string}) {
+  constructor(props: {config: RadialConfig, onConfigChange: any, onRemoveClick: any, style?: string}) {
     super()
     this.state = props.config
   }
 
   onSizeChange(value: string) {
-    console.log(value)
     if (!isNaN(parseInt(value))) {
       this.setState(prevState => ({
         ...prevState,
@@ -21,7 +20,6 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
   }
 
   onNumSegmentsChange(value: string) {
-    console.log(value)
     if (!isNaN(parseInt(value))) {
       this.setState(prevState => ({
         ...prevState,
@@ -31,7 +29,6 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
   }
 
   onSweepChange(value: string) {
-    console.log(value)
     if (!isNaN(parseInt(value))) {
       this.setState(prevState => ({
         ...prevState,
@@ -41,7 +38,6 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
   }
 
   onRotationChange(value: string) {
-    console.log(value)
     if (!isNaN(parseInt(value))) {
       this.setState(prevState => ({
         ...prevState,
@@ -51,7 +47,6 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
   }
 
   onOffsetChange(value: string) {
-    console.log(value)
     if (!isNaN(parseFloat(value))) {
       this.setState(prevState => ({
         ...prevState,
@@ -61,7 +56,6 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
   }
 
   onGapChange(value: string) {
-    console.log(value)
     if (!isNaN(parseInt(value))) {
       this.setState(prevState => ({
         ...prevState,
@@ -74,7 +68,7 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
     this.props.onConfigChange(this.state)
   }
 
-  render(props: {config: RadialConfig, onRemove: any, onConfigChange: any, style?: string}, state: RadialConfig) {
+  render(props: {config: RadialConfig, onRemoveClick: any, onConfigChange: any, style?: string}, state: RadialConfig) {
     return (
       <div style={props.style}>
 
@@ -84,7 +78,7 @@ export class RadialItem extends Component<{config: RadialConfig, onRemove: any, 
             Radial 1
           </Text>
 
-          <IconButton onClick={props.onRemove} value={false}>
+          <IconButton onClick={props.onRemoveClick} value={false}>
             <MinusIcon />
           </IconButton>
         </div>

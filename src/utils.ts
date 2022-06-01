@@ -8,12 +8,17 @@ export class Utils {
     return radians * (180 / Math.PI);
   }
 
-  static rotateAroundPoint(node: any, point: Vector, angle: number) {
+  static rotateAroundRelativePoint(node: any, point: Vector, angle: number) {
     let radian = -1 * angle * (Math.PI / 180)
     let newx = Math.cos(radian) * node.x + node.y * Math.sin(radian) - point.y * Math.sin(radian) - point.x * Math.cos(radian) + point.x
     let newy = - Math.sin(radian) * node.x + point.x * Math.sin(radian) + node.y * Math.cos(radian) - point.y * Math.cos(radian) + point.y
     node.relativeTransform = [[Math.cos(radian), Math.sin(radian), newx],
     [-Math.sin(radian), Math.cos(radian), newy ]]
+  }
+
+  static centerInViewport(node: SceneNode) {
+    node.x = Math.round(figma.viewport.bounds.x + (figma.viewport.bounds.width / 2) - (node.width / 2))
+    node.y = Math.round(figma.viewport.bounds.y + (figma.viewport.bounds.height / 2) - (node.height / 2))
   }
 
 }

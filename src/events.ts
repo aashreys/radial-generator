@@ -1,6 +1,8 @@
-export class Events {
+export class Event {
 
   static RADIAL_REQUESTED = 'RADIAL_REQUESTED'
-  static NEW_RADIAL = 'NEW_RADIAL'
+  static RADIAL_ADDED = 'RADIAL_ADDED'
+  static RADIAL_UPDATED = 'RADIAL_UPDATED'
+  static RADIAL_REMOVED = 'RADIAL_REMOVED'
 
 }

@@ -1,8 +1,10 @@
-import { convertHexColorToRgbColor, emit, on, once, showUI } from "@create-figma-plugin/utilities"
-import { Events } from "./events"
+import { convertHexColorToRgbColor, emit, on, showUI } from "@create-figma-plugin/utilities"
+import { Event } from "./events"
 import { Radial } from "./models/radial"
 import { RadialConfig } from "./models/radial_config"
 import { Utils } from "./utils"
+
+const radials: Radial[] = []
 
 const DEFAULT_RADIAL_CONFIG: RadialConfig = {
   size: 800,
@@ -14,17 +16,36 @@ const DEFAULT_RADIAL_CONFIG: RadialConfig = {
 }
 
 export default function () {
-  const options = { width: 240, height: 600}
-  const data = { defaultConfig: DEFAULT_RADIAL_CONFIG }
-  showUI(options, data)
-  
-  // figma.closePlugin()
+  showUI({ width: 240, height: 480 })
 }
 
-on(Events.RADIAL_REQUESTED, () => {
+on(Event.RADIAL_REQUESTED, onRadialRequested)
+
+on(Event.RADIAL_UPDATED, (data) => onRadialUpdated(data.index, data.newConfig))
+
+on(Event.RADIAL_REMOVED, (data) => onRadialRemoved(data.index))
+
+function onRadialRequested() {
   const radial: Radial = createDefaultRadial()
-  emit(Events.NEW_RADIAL, { radial: radial })
-})
+  radials.push(radial)
+  emit(Event.RADIAL_ADDED, { config: radial.config })
+}
+
+function onRadialUpdated(index: number, newConfig: RadialConfig) {
+  deleteRadial(radials[index])
+  let newRadial = createRadial('Radial ' + (index + 1), newConfig)
+  radials.splice(index, 0, newRadial)
+}
+
+function onRadialRemoved(index: number) {
+  console.log('onRadialRemoved: ' + index)
+}
+
+function deleteRadial(radial: Radial) {
+  radial.node.remove()
+  radial.componentSetNode.remove()
+  radials.splice(radials.indexOf(radial), 1)
+}
 
 function createDefaultRadial(): Radial {
   return createRadial('Default Radial', DEFAULT_RADIAL_CONFIG)
@@ -34,19 +55,21 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const size = config.size
   const perSegmentSweep = config.sweep / config.numSegments
 
-  let radial = figma.createFrame()
-  radial.name = name
-  radial.fills = []
-  radial.clipsContent = false
-  radial.resize(size, size)
+  let container = figma.createFrame()
+  // Utils.centerInViewport(container)
+  container.name = name
+  container.fills = []
+  container.clipsContent = false
+  container.resize(size, size)
 
   let radialCenter: Vector = {
-    x: radial.x + radial.width / 2,
-    y: radial.y + radial.height / 2
+    x: size / 2,
+    y: size / 2
   }
   
   let refSegment = createArc(config)
-  radial.appendChild(refSegment)
+  refSegment.x = refSegment.y = 0
+  container.appendChild(refSegment)
   
   let refSegmentVector = figma.flatten([refSegment])
   let refPosition: Vector = {
@@ -55,26 +78,28 @@ function createRadial(name: string, config: RadialConfig): Radial {
   }
 
   const segmentComponents = createSegmentComponentSet(name + ' Segment', refSegmentVector)
+  segmentComponents.x = container.x - segmentComponents.width - 200
+  segmentComponents.y = container.y
   refSegmentVector.remove()
 
   let segmentInstance = segmentComponents.defaultVariant.createInstance()
   segmentInstance.name = 'Segment 1'
-  radial.appendChild(segmentInstance)
+  container.appendChild(segmentInstance)
   segmentInstance.x = refPosition.x
   segmentInstance.y = refPosition.y
 
   for (let i = 1; i < config.numSegments; i++) {
     let newSegmentInstance = segmentInstance.clone()
     newSegmentInstance.name = 'Segment ' + (i + 1)
-    radial.appendChild(newSegmentInstance)
+    container.appendChild(newSegmentInstance)
     let rotation = (perSegmentSweep * i)
-    Utils.rotateAroundPoint(newSegmentInstance, radialCenter, rotation)
+    Utils.rotateAroundRelativePoint(newSegmentInstance, radialCenter, rotation)
   }
 
   return {
-    nodeId: radial.id,
+    node: container,
     config: config,
-    componentSetNodeId: segmentComponents.id
+    componentSetNode: segmentComponents
   }
   
 }

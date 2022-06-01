@@ -2,36 +2,26 @@ import { IconButton, Text } from "@create-figma-plugin/ui";
 import { emit, on } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useState } from 'preact/hooks'
-import { Events } from "../events";
+import { Event as Event } from "../events";
 import { PlusIcon } from "../icons/icon_plus";
 import { Radial } from "../models/radial";
 import { RadialConfig } from "../models/radial_config";
-import { RadialItem } from "./radial_item";
+import { RadialItem as RadialConfigItem } from "./radial_item";
 
-const DEFAULT_RADIAL_CONFIG: RadialConfig = {
-  size: 800,
-  numSegments: 6,
-  sweep: 360,
-  rotation: 0,
-  innerOffset: 0.5,
-  gap: 12
-}
-
-function AddRadial(props: any) {
+function AddSection(props: any) {
 
   return(
     <div style='
     display: flex; 
-    margin-left: 
-    var(--space-extra-small); 
+    margin-left: var(--space-extra-small); 
     margin-bottom: 2px; 
     align-items: center'>
 
       <Text bold style={'flex-grow: 1'}>
-        Radial
+        {props.title}
       </Text>
 
-      <IconButton onClick={props.onAddRadialClicked} value={false} >
+      <IconButton onClick={props.onAddClick} value={false} >
         <PlusIcon />
       </IconButton>
 
@@ -42,37 +32,57 @@ function AddRadial(props: any) {
 
 export function RadialList(props: any) {
 
-  const [radials, setRadials] = useState<Radial[]>([])
+  const [configs, setConfigs] = useState<RadialConfig[]>([])
 
-  function onAddRadialClicked() {
-    emit(Events.RADIAL_REQUESTED)
+  function onAddClick() {
+    emit(Event.RADIAL_REQUESTED)
   }
 
-  function addRadial(radial: Radial) {
-    let newRadials = radials.slice()
-    newRadials.push(radial)
-    setRadials(newRadials)
+  function addRadialConfig(config: RadialConfig) {
+    let newConfigs = configs.slice()
+    newConfigs.push(config)
+    setConfigs(newConfigs)
   }
 
   function removeRadial(index: number) {
-    let newRadials = radials.slice()
-    newRadials.splice(index, 1)
-    setRadials(newRadials)
+    let newConfigs = configs.slice()
+    newConfigs.splice(index, 1)
+    setConfigs(newConfigs)
+    emit(Event.RADIAL_REMOVED, { index: index })
   }
 
-  on(Events.NEW_RADIAL, (data) => addRadial(data.radial))
+  function updateRadial(index: number, newConfig: RadialConfig) {
+    configs[index] = newConfig
+    emit(Event.RADIAL_UPDATED, { index: index, newConfig: newConfig })
+  }
+
+  on(Event.RADIAL_ADDED, (data) => addRadialConfig(data.config))
   
   return (
     <div style='display: flex; flex-direction: column; padding-top: var(--space-extra-small); padding-bottom: var(--space-extra-small); padding-left: var(--space-extra-small); padding-right: var(--space-extra-small)'>
-      <AddRadial onAddRadialClicked={onAddRadialClicked} />
-        {
-          radials.map((radial, index) => 
-            <RadialItem 
-            config={radial.config}
-            onRemove={() => removeRadial(index)}
-            onConfigChange={() => {}} />
-          )
-        }
+
+      <AddSection 
+      title={configs.length > 0 ? 'Add Radial' : 'Create Radial Menu'} 
+      onAddClick={onAddClick} />
+
+      {
+        configs.length > 0 &&
+        configs.map((config, index) => 
+          <RadialConfigItem 
+          config={config}
+          onRemoveClick={() => removeRadial(index)}
+          onConfigChange={(newConfig: RadialConfig) => updateRadial(index, newConfig)} />
+        )
+      }
+
+      {
+        configs.length === 0 &&
+        <Text 
+        style={'margin-top: var(--space-extra-small); margin-left: var(--space-extra-small);'}>
+          Create a new radial menu, or select a previously created radial menu to edit it.
+        </Text>
+      }
+
     </div>
   )
 
