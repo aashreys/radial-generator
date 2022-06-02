@@ -21,4 +21,8 @@ export class Utils {
     node.y = Math.round(figma.viewport.bounds.y + (figma.viewport.bounds.height / 2) - (node.height / 2))
   }
 
+  static centerInParent(nodes: SceneNode[]) {
+    
+  }
+
 }

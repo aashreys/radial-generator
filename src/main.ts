@@ -4,51 +4,163 @@ import { Radial } from "./models/radial"
 import { RadialConfig } from "./models/radial_config"
 import { Utils } from "./utils"
 
+let radialMenu: FrameNode
+
+let radialComponents: FrameNode
+
 const radials: Radial[] = []
 
-const DEFAULT_RADIAL_CONFIG: RadialConfig = {
-  size: 800,
+const DEFAULT_CONFIG: RadialConfig = {
+  size: 640,
   numSegments: 6,
   sweep: 360,
   rotation: 0,
   innerOffset: 0.5,
-  gap: 12
+  gap: 8
 }
 
-export default function () {
-  showUI({ width: 240, height: 480 })
-}
+export default function () { showUI({ width: 240, height: 480 }) }
 
 on(Event.RADIAL_REQUESTED, onRadialRequested)
+
+on(Event.RADIAL_DUPLICATE_REQUESTED, (data) => onRadialDuplicateRequested(data.index))
 
 on(Event.RADIAL_UPDATED, (data) => onRadialUpdated(data.index, data.newConfig))
 
 on(Event.RADIAL_REMOVED, (data) => onRadialRemoved(data.index))
 
+function createRadialFrames() {
+  if (!radialMenu || radialMenu.removed) {
+    radialMenu = figma.createFrame()
+    radialMenu.name = 'Radial Menu'
+    radialMenu.fills = []
+    radialMenu.clipsContent = false
+  }
+
+  if (!radialComponents || radialComponents.removed) {
+    radialComponents = figma.createFrame()
+    radialComponents.name = 'Radial Components'
+    radialComponents.fills = []
+
+    radialComponents.layoutMode = 'HORIZONTAL'
+    radialComponents.primaryAxisSizingMode = 'AUTO'
+    radialComponents.counterAxisSizingMode = 'AUTO'
+    radialComponents.itemSpacing = 48
+  }
+}
+
+function deleteRadialFrames() {
+  radialMenu?.remove()
+  radialComponents?.remove()
+}
+
+function repositionRadialFrames() {
+  radialComponents.x = radialMenu.x + radialMenu.width + 200
+  radialComponents.y = radialMenu.y
+}
+
 function onRadialRequested() {
-  const radial: Radial = createDefaultRadial()
-  radials.push(radial)
+  createRadialFrames()
+  const radial = addRadialToMenu(DEFAULT_CONFIG)
+  figma.viewport.scrollAndZoomIntoView([radialMenu])
   emit(Event.RADIAL_ADDED, { config: radial.config })
 }
 
+function onRadialDuplicateRequested(index: number) {
+
+}
+
 function onRadialUpdated(index: number, newConfig: RadialConfig) {
-  deleteRadial(radials[index])
-  let newRadial = createRadial('Radial ' + (index + 1), newConfig)
-  radials.splice(index, 0, newRadial)
+  updateRadialInMenu(index, newConfig)
+  figma.viewport.scrollAndZoomIntoView([radialMenu])
 }
 
 function onRadialRemoved(index: number) {
-  console.log('onRadialRemoved: ' + index)
+  removeRadialInMenu(index)
+  if (radials.length === 0) deleteRadialFrames()
 }
 
-function deleteRadial(radial: Radial) {
-  radial.node.remove()
-  radial.componentSetNode.remove()
-  radials.splice(radials.indexOf(radial), 1)
+function addRadialToMenu(config: RadialConfig): Radial {
+  const radial: Radial = createRadial('Radial ' + (radials.length + 1), config)
+  radials.push(radial)
+  
+  radialMenu.appendChild(radial.node)
+  radialComponents.appendChild(radial.componentSetNode)
+
+  resizeMenu()
+  centerRadialsInMenu()
+  repositionRadialFrames()
+
+  return radial
 }
 
-function createDefaultRadial(): Radial {
-  return createRadial('Default Radial', DEFAULT_RADIAL_CONFIG)
+function updateRadialInMenu(index: number, newConfig: RadialConfig): Radial {
+  const newRadial: Radial = createRadial('Radial ' + (index + 1), newConfig)
+  try {
+    copyRadialVisuals(radials[index], newRadial)
+    radials[index].node?.remove()
+    radials[index].componentSetNode?.remove()
+  } 
+  catch (e) {
+    console.warn('Error deleting node:' + JSON.stringify(e))
+    figma.notify('Recreating radial...')
+  }
+  finally {
+    radials.splice(index, 1, newRadial)
+
+    radialMenu.insertChild(index, newRadial.node)
+    radialComponents.insertChild(index, newRadial.componentSetNode)
+
+    resizeMenu()
+    centerRadialsInMenu()
+    repositionRadialFrames()
+
+    return newRadial
+  }
+}
+
+function removeRadialInMenu(index: number): void {
+  try {
+    radials[index].node?.remove()
+    radials[index].componentSetNode?.remove()
+  } 
+  catch (e) {
+    console.warn('Error deleting node:' + JSON.stringify(e))
+  }
+  finally {
+    radials.splice(index, 1)
+    resizeMenu()
+    centerRadialsInMenu()
+    repositionRadialFrames()
+  }
+}
+
+function resizeMenu() {
+  let center: Vector = {
+    x: radialMenu.x + radialMenu.width / 2,
+    y: radialMenu.y + radialMenu.height / 2
+  }
+  let largestSize = 0.01
+  for (let radial of radials) {
+    largestSize = radial.config.size > largestSize ? radial.config.size : largestSize
+  }
+  radialMenu.resize(largestSize, largestSize)
+
+  let newCenter: Vector = {
+    x: radialMenu.x + largestSize / 2,
+    y: radialMenu.y + largestSize / 2
+  }
+
+  radialMenu.x += - newCenter.x + center.x
+  radialMenu.y += - newCenter.y + center.y
+}
+
+function centerRadialsInMenu() {
+  for (let radial of radials) {
+    radial.node.x = radial.node.y = 0
+    radial.node.x = (radialMenu.width - radial.config.size) / 2
+    radial.node.y = (radialMenu.height - radial.config.size) / 2
+  }
 }
 
 function createRadial(name: string, config: RadialConfig): Radial {
@@ -56,7 +168,6 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const perSegmentSweep = config.sweep / config.numSegments
 
   let container = figma.createFrame()
-  // Utils.centerInViewport(container)
   container.name = name
   container.fills = []
   container.clipsContent = false
@@ -105,11 +216,14 @@ function createRadial(name: string, config: RadialConfig): Radial {
 }
 
 function createSegmentComponentSet(name: string, refArc: VectorNode) {
+  let width = refArc.width ? refArc.width : 0.01
+  let height = refArc.height ? refArc.height : 0.01
+
   const unfocusedSegment = refArc.clone()
 
   const unfocusedComponent = figma.createComponent()
   unfocusedComponent.name = 'Focused=No'
-  unfocusedComponent.resize(unfocusedSegment.width, unfocusedSegment.height)
+  unfocusedComponent.resize(width, height)
   unfocusedComponent.x = unfocusedSegment.x + 2000
   unfocusedComponent.appendChild(unfocusedSegment)
   unfocusedSegment.x = unfocusedSegment.y = 0
@@ -122,7 +236,7 @@ function createSegmentComponentSet(name: string, refArc: VectorNode) {
 
   const focusedComponent = figma.createComponent()
   focusedComponent.name = 'Focused=Yes'
-  focusedComponent.resize(focusedSegment.width, focusedSegment.height)
+  focusedComponent.resize(width, height)
   focusedComponent.x = unfocusedComponent.x
   focusedComponent.y = unfocusedComponent.y + unfocusedComponent.height + 100
   focusedComponent.appendChild(focusedSegment)
@@ -188,3 +302,24 @@ function createArc(config: RadialConfig): EllipseNode {
   return ellipse
 }
 
+function copyRadialVisuals(from: Radial, to: Radial) {
+  try {
+    for (let i in to.componentSetNode.children) {
+      let toSegment = (to.componentSetNode.children[i] as ComponentNode).children[0] as VectorNode
+      let fromSegment = (from.componentSetNode.children[i] as ComponentNode).children[0] as VectorNode
+      toSegment.fills = fromSegment.fills
+      toSegment.effects = fromSegment.effects
+      toSegment.strokes = fromSegment.strokes
+      // toSegment.strokeWeight = fromSegment.strokeWeight // config value overrides this
+      toSegment.strokeJoin = fromSegment.strokeJoin
+      toSegment.strokeAlign = fromSegment.strokeAlign
+      toSegment.dashPattern = fromSegment.dashPattern
+      // toSegment.strokeGeometry = fromSegment.strokeGeometry // cannot be copied
+      toSegment.strokeCap = fromSegment.strokeCap
+      toSegment.strokeMiterLimit = fromSegment.strokeMiterLimit
+    }
+  }
+  catch (e) {
+    console.warn('Error while copying visuals: ' + JSON.stringify(e))
+  }
+}

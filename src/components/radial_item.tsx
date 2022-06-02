@@ -1,11 +1,12 @@
 import { IconButton, Text, TextboxNumeric } from "@create-figma-plugin/ui";
 import { Component, h } from "preact";
+import { CopyIcon } from "../icons/icon_copy";
 import { MinusIcon } from "../icons/icon_minus";
 import { RadialConfig } from "../models/radial_config";
 
-export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: any, onConfigChange: any, style?: string}, RadialConfig> {
+export class RadialItem extends Component<{name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, RadialConfig> {
   
-  constructor(props: {config: RadialConfig, onConfigChange: any, onRemoveClick: any, style?: string}) {
+  constructor(props: {name: string, config: RadialConfig, onConfigChange: any, onRemoveClick: any, onDuplicateClick: any, style?: string}) {
     super()
     this.state = props.config
   }
@@ -47,10 +48,10 @@ export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: 
   }
 
   onOffsetChange(value: string) {
-    if (!isNaN(parseFloat(value))) {
+    if (!isNaN(parseInt(value))) {
       this.setState(prevState => ({
         ...prevState,
-        innerOffset: parseFloat(value)
+        innerOffset: parseInt(value) / 100
       }), this.onConfigChange)
     }
   }
@@ -68,19 +69,28 @@ export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: 
     this.props.onConfigChange(this.state)
   }
 
-  render(props: {config: RadialConfig, onRemoveClick: any, onConfigChange: any, style?: string}, state: RadialConfig) {
+  render(props: {name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, state: RadialConfig) {
     return (
-      <div style={props.style}>
+      <div style={'margin-bottom: var(--space-extra-small)'}>
 
-        <div style='display: flex; margin-left: var(--space-extra-small); margin-bottom: 2px; align-items: center'>
+        <div style='
+        display: flex; 
+        margin-left: var(--space-extra-small); 
+        margin-bottom: 2px; 
+        align-items: center'>
 
           <Text bold style={'flex-grow: 1'}>
-            Radial 1
+            {props.name}
           </Text>
+
+          <IconButton onClick={props.onDuplicateClick} value={false}>
+            <CopyIcon />
+          </IconButton>
 
           <IconButton onClick={props.onRemoveClick} value={false}>
             <MinusIcon />
           </IconButton>
+
         </div>
         
 
@@ -103,7 +113,7 @@ export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: 
           noBorder
           icon="N"
           minimum={1}
-          incrementBig={1}
+          incrementBig={2}
           incrementSmall={1}
           integer
           onInput={e => this.onNumSegmentsChange(e.currentTarget.value)}
@@ -125,7 +135,7 @@ export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: 
 
         </div>
 
-        <div style='display: flex; margin-bottom: var(--space-extra-large)'>
+        <div style='display: flex'>
 
           <TextboxNumeric 
           style={'flex-grow: 1;'}
@@ -146,12 +156,12 @@ export class RadialItem extends Component<{config: RadialConfig, onRemoveClick: 
           noBorder
           icon="O"
           minimum={0}
-          maximum={1}
-          incrementBig={0.2}
-          incrementSmall={0.1}
+          maximum={100}
+          incrementBig={10}
+          incrementSmall={1}
           integer
           onInput={e => this.onOffsetChange(e.currentTarget.value)}
-          value={(state.innerOffset.toString())}  />
+          value={Math.round((state.innerOffset * 100)).toString()}  />
 
           <div style='width: var(--space-extra-small)'/>
 

@@ -4,7 +4,6 @@ import { h } from "preact";
 import { useState } from 'preact/hooks'
 import { Event as Event } from "../events";
 import { PlusIcon } from "../icons/icon_plus";
-import { Radial } from "../models/radial";
 import { RadialConfig } from "../models/radial_config";
 import { RadialItem as RadialConfigItem } from "./radial_item";
 
@@ -38,7 +37,11 @@ export function RadialList(props: any) {
     emit(Event.RADIAL_REQUESTED)
   }
 
-  function addRadialConfig(config: RadialConfig) {
+  function onDuplicateClick(index: number) {
+    emit(Event.RADIAL_DUPLICATE_REQUESTED, { index : index })
+  }
+
+  function addRadialConfig(config: RadialConfig, index?: number) {
     let newConfigs = configs.slice()
     newConfigs.push(config)
     setConfigs(newConfigs)
@@ -68,9 +71,11 @@ export function RadialList(props: any) {
       {
         configs.length > 0 &&
         configs.map((config, index) => 
-          <RadialConfigItem 
+          <RadialConfigItem
+          name={'Radial ' + (index + 1)}
           config={config}
           onRemoveClick={() => removeRadial(index)}
+          onDuplicateClick={() => onDuplicateClick(index)}
           onConfigChange={(newConfig: RadialConfig) => updateRadial(index, newConfig)} />
         )
       }
@@ -79,7 +84,7 @@ export function RadialList(props: any) {
         configs.length === 0 &&
         <Text 
         style={'margin-top: var(--space-extra-small); margin-left: var(--space-extra-small);'}>
-          Create a new radial menu, or select a previously created radial menu to edit it.
+          Create a new radial menu with one or more radials to get started.
         </Text>
       }
 
