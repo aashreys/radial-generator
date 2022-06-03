@@ -192,42 +192,37 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const gapRect1 = figma.createRectangle()
   radialContainer.appendChild(gapRect1)
   gapRect1.x = gapRect1.y = center
-  gapRect1.resize((config.size / 2) + 10, config.gap / 2)
+  gapRect1.resize((config.size / 2) + 10, config.gap / 2 > 0 ? config.gap / 2 : 0.01)
 
   const gapRect2 = gapRect1.clone()
   radialContainer.appendChild(gapRect2)
-  const angleOffset = Utils.angleOfArc(config.size / 2, config.gap / 2)
+  const angleOffset = Utils.arcAngle(config.size / 2, config.gap / 2)
   Utils.rotateAroundRelativePoint(gapRect2, {x: center, y: center}, perSegmentSweep - angleOffset)
 
   let arcGroup = figma.group([gapRect1, gapRect2, arc], radialContainer)
 
   let arcFrame = figma.createFrame()
+  arcFrame.clipsContent = false
   radialContainer.appendChild(arcFrame)
   arcFrame.fills = []
   arcFrame.x = arcGroup.x
   arcFrame.y = arcGroup.y
-  arcFrame.appendChild(arcGroup)
+  arcFrame.resizeWithoutConstraints(arc.width, arc.height)
+  arcFrame.appendChild(arcGroup)  
   arcGroup.x = arcGroup.y = 0
-  arcGroup.x -= arc.x
-  arcFrame.x += arc.x
-  arcFrame.resize(arc.width, arc.height)
-  let subtract: BooleanOperationNode = figma.createBooleanOperation()
+  let delta = arc.x
+  arcGroup.x -= delta
+  arcFrame.x += delta
+  
+  let subtract = figma.createBooleanOperation()
   subtract.name = 'Subtract'
   subtract.booleanOperation = 'SUBTRACT'
   arcFrame.appendChild(subtract)
-  // for (let child of arcGroup.children) {
-  //   subtract.appendChild(child)
-  // }
-  console.log(subtract)
-  try {
-    const arcWithGap: VectorNode = figma.flatten([subtract], arcFrame)
-    arcWithGap.resize(arcFrame.width, arcWithGap.height)
-    console.log('Flatten 2')
+  for (let child of arcGroup.children) {
+    subtract.appendChild(child)
   }
-  catch (e) {
-    console.log(e)
-  }
-  
+  const arcWithGap: VectorNode = figma.flatten([subtract], arcFrame)
+  arcWithGap.resize(arcFrame.width, arcWithGap.height)
 
   const segmentComponents = createSegmentComponentSet(arcFrame, config)
   segmentComponents.name = name + ' Segment'
@@ -316,7 +311,6 @@ function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
 }
 
 function createArc(config: RadialConfig): EllipseNode {
-  // const startAngle = config.rotation
   const perArcSweep = config.sweep / config.numSegments
 
   const ellipse = figma.createEllipse()
@@ -327,12 +321,6 @@ function createArc(config: RadialConfig): EllipseNode {
     color: convertHexColorToRgbColor('d9d9d9') as RGB
   }]
 
-  ellipse.strokes = [
-    {
-      type: 'SOLID',
-      color: {r: 1, g: 1, b: 1}
-    }
-  ]
   ellipse.strokeWeight = config.gap
   ellipse.strokeAlign = 'CENTER'
 
