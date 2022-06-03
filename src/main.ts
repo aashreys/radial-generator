@@ -1,3 +1,4 @@
+import { useInitialFocus } from "@create-figma-plugin/ui"
 import { convertHexColorToRgbColor, emit, on, showUI } from "@create-figma-plugin/utilities"
 import { Event } from "./events"
 import { Radial } from "./models/radial"
@@ -182,56 +183,17 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const ellipse: EllipseNode = createArc(config)
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
-
-  // const refSegmentVector: VectorNode = figma.flatten([arc])
   
   const arc = figma.flatten([ellipse])
-  console.log('Flatten 1')
-  radialContainer.appendChild(arc)
 
-  const gapRect1 = figma.createRectangle()
-  radialContainer.appendChild(gapRect1)
-  gapRect1.x = gapRect1.y = center
-  gapRect1.resize((config.size / 2) + 10, config.gap / 2 > 0 ? config.gap / 2 : 0.01)
-
-  const gapRect2 = gapRect1.clone()
-  radialContainer.appendChild(gapRect2)
-  const angleOffset = Utils.arcAngle(config.size / 2, config.gap / 2)
-  Utils.rotateAroundRelativePoint(gapRect2, {x: center, y: center}, perSegmentSweep - angleOffset)
-
-  let arcGroup = figma.group([gapRect1, gapRect2, arc], radialContainer)
-
-  let arcFrame = figma.createFrame()
-  arcFrame.clipsContent = false
-  radialContainer.appendChild(arcFrame)
-  arcFrame.fills = []
-  arcFrame.x = arcGroup.x
-  arcFrame.y = arcGroup.y
-  arcFrame.resizeWithoutConstraints(arc.width, arc.height)
-  arcFrame.appendChild(arcGroup)  
-  arcGroup.x = arcGroup.y = 0
-  let delta = arc.x
-  arcGroup.x -= delta
-  arcFrame.x += delta
-  
-  let subtract = figma.createBooleanOperation()
-  subtract.name = 'Subtract'
-  subtract.booleanOperation = 'SUBTRACT'
-  arcFrame.appendChild(subtract)
-  for (let child of arcGroup.children) {
-    subtract.appendChild(child)
-  }
-  const arcWithGap: VectorNode = figma.flatten([subtract], arcFrame)
-  arcWithGap.resize(arcFrame.width, arcWithGap.height)
-
-  const segmentComponents = createSegmentComponentSet(arcFrame, config)
+  const segmentComponents = createSegmentComponentSet(arc, config)
   segmentComponents.name = name + ' Segment'
   segmentComponents.x = radialContainer.x - segmentComponents.width - 200
   segmentComponents.y = radialContainer.y
 
   const segmentInstance = segmentComponents.defaultVariant.createInstance()
-  segmentInstance.x = arcFrame.x
-  segmentInstance.y = arcFrame.y
+  segmentInstance.x = arc.x
+  segmentInstance.y = arc.y
 
   const segmentInstances: InstanceNode[] = []
   segmentInstances.push(segmentInstance)
@@ -243,10 +205,10 @@ function createRadial(name: string, config: RadialConfig): Radial {
   for (let i = 0; i < config.numSegments; i++) {
     segmentInstances[i].name = 'Segment ' + (i + 1)
     radialContainer.appendChild(segmentInstances[i])
-    Utils.rotateAroundRelativePoint(segmentInstances[i], {x: center, y: center}, config.rotation + (perSegmentSweep * i))
+    Utils.rotate(segmentInstances[i], {x: center, y: center}, config.rotation + (perSegmentSweep * i))
   }
 
-  Utils.removeNodes([arcFrame])
+  Utils.removeNodes([arc])
 
   return {
     node: radialContainer,
@@ -256,17 +218,28 @@ function createRadial(name: string, config: RadialConfig): Radial {
   
 }
 
-function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
-  let width = arcFrame.width ? arcFrame.width : 0.01 // must be >= 0.01 else Figma throws an error
-  let height = arcFrame.height ? arcFrame.height : 0.01 // must be >= 0.01 else Figma throws an error
+function createSegmentComponentSet(arc: VectorNode, config: RadialConfig) {
+  let width = arc.width ? arc.width : 0.01 // must be >= 0.01 else Figma throws an error
+  let height = arc.height ? arc.height : 0.01 // must be >= 0.01 else Figma throws an error
 
-  const unfocusedSegment = arcFrame.children[0] as VectorNode
+  const unfocusedSegment = arc.clone()
+  unfocusedSegment.fills = [{
+    type: 'SOLID',
+    color: convertHexColorToRgbColor('d9d9d9') as RGB
+  }]
+  unfocusedSegment.strokes = [{
+    type: 'SOLID',
+    color: convertHexColorToRgbColor('ffffff') as RGB
+  }]
+  unfocusedSegment.strokeWeight = config.gap
+  unfocusedSegment.strokeAlign = 'CENTER'
 
   const unfocusedComponent = figma.createComponent()
   unfocusedComponent.name = 'Focused=No'
   unfocusedComponent.resize(width, height)
   unfocusedComponent.x = unfocusedSegment.x + 2000
   unfocusedComponent.appendChild(unfocusedSegment)
+  unfocusedSegment.x = unfocusedSegment.y = 0
 
   const focusedSegment = unfocusedSegment.clone()
   focusedSegment.fills = [{
@@ -320,9 +293,6 @@ function createArc(config: RadialConfig): EllipseNode {
     type: 'SOLID',
     color: convertHexColorToRgbColor('d9d9d9') as RGB
   }]
-
-  ellipse.strokeWeight = config.gap
-  ellipse.strokeAlign = 'CENTER'
 
   ellipse.arcData = {
     startingAngle: 0,

@@ -8,7 +8,7 @@ export class Utils {
     return radians * (180 / Math.PI);
   }
 
-  static rotateAroundRelativePoint(node: any, point: Vector, angle: number) {
+  static rotate(node: any, point: Vector, angle: number) {
     let radian = -1 * angle * (Math.PI / 180)
     let newx = Math.cos(radian) * node.x + node.y * Math.sin(radian) - point.y * Math.sin(radian) - point.x * Math.cos(radian) + point.x
     let newy = - Math.sin(radian) * node.x + point.x * Math.sin(radian) + node.y * Math.cos(radian) - point.y * Math.cos(radian) + point.y
@@ -35,7 +35,6 @@ export class Utils {
     let sine = (distance / 2) / radius
     let radians = Math.asin(sine)
     let degrees = Utils.radiansToDegrees(radians)
-    console.log(degrees)
     return degrees
   }
 
