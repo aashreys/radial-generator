@@ -214,13 +214,11 @@ function createRadial(name: string, config: RadialConfig): Radial {
   arcGroup.x -= delta
   arcFrame.x += delta
   
-  let subtract = figma.createBooleanOperation()
+  let subtract = figma.subtract([...arcGroup.children], arcFrame)
   subtract.name = 'Subtract'
   subtract.booleanOperation = 'SUBTRACT'
   arcFrame.appendChild(subtract)
-  for (let child of arcGroup.children) {
-    subtract.appendChild(child)
-  }
+
   const arcWithGap: VectorNode = figma.flatten([subtract], arcFrame)
   arcWithGap.resize(arcFrame.width, arcWithGap.height)
 
