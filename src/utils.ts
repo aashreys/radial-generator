@@ -25,4 +25,18 @@ export class Utils {
     
   }
 
+  static removeNodes(nodes: SceneNode[]) {
+    for (let node of nodes) {
+      if (node && !node.removed) node.remove()
+    }
+  }
+
+  static angleOfArc(radius: number, distance: number): number {
+    // let height = Math.sqrt(Math.pow(radius, 2) - (Math.pow(distance, 2) / 4))
+    let sine = (distance / 2) / radius
+    let radians = Math.asin(sine)
+    let degrees = Utils.degreesToRadians(radians)
+    return degrees
+  }
+
 }

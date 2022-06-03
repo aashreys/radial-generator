@@ -38,6 +38,10 @@ export function RadialList(props: any) {
   }
 
   function onDuplicateClick(index: number) {
+    let duplicateConfig = configs[index]
+    let newConfigs = configs.slice()
+    newConfigs.splice(index + 1, 0 , duplicateConfig)
+    setConfigs(newConfigs)
     emit(Event.RADIAL_DUPLICATE_REQUESTED, { index : index })
   }
 

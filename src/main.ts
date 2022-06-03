@@ -50,8 +50,7 @@ function createRadialFrames() {
 }
 
 function deleteRadialFrames() {
-  radialMenu?.remove()
-  radialComponents?.remove()
+  Utils.removeNodes([radialMenu, radialComponents])
 }
 
 function repositionRadialFrames() {
@@ -67,7 +66,8 @@ function onRadialRequested() {
 }
 
 function onRadialDuplicateRequested(index: number) {
-
+  let configToDuplicate = radials[index].config
+  insertRadialInMenu(index + 1, configToDuplicate)
 }
 
 function onRadialUpdated(index: number, newConfig: RadialConfig) {
@@ -87,9 +87,19 @@ function addRadialToMenu(config: RadialConfig): Radial {
   radialMenu.appendChild(radial.node)
   radialComponents.appendChild(radial.componentSetNode)
 
-  resizeMenu()
-  centerRadialsInMenu()
-  repositionRadialFrames()
+  updateRadialMenuLayout()
+
+  return radial
+}
+
+function insertRadialInMenu(index: number, config: RadialConfig): Radial {
+  const radial: Radial = createRadial('Radial ' + (index + 1), config)
+  radials.splice(index, 0, radial)
+
+  radialMenu.insertChild(index, radial.node)
+  radialComponents.insertChild(index, radial.componentSetNode)
+
+  updateRadialMenuLayout()
 
   return radial
 }
@@ -98,8 +108,7 @@ function updateRadialInMenu(index: number, newConfig: RadialConfig): Radial {
   const newRadial: Radial = createRadial('Radial ' + (index + 1), newConfig)
   try {
     copyRadialVisuals(radials[index], newRadial)
-    radials[index].node?.remove()
-    radials[index].componentSetNode?.remove()
+    Utils.removeNodes([radials[index].node, radials[index].componentSetNode])
   } 
   catch (e) {
     console.warn('Error deleting node:' + JSON.stringify(e))
@@ -111,9 +120,7 @@ function updateRadialInMenu(index: number, newConfig: RadialConfig): Radial {
     radialMenu.insertChild(index, newRadial.node)
     radialComponents.insertChild(index, newRadial.componentSetNode)
 
-    resizeMenu()
-    centerRadialsInMenu()
-    repositionRadialFrames()
+    updateRadialMenuLayout()
 
     return newRadial
   }
@@ -121,17 +128,14 @@ function updateRadialInMenu(index: number, newConfig: RadialConfig): Radial {
 
 function removeRadialInMenu(index: number): void {
   try {
-    radials[index].node?.remove()
-    radials[index].componentSetNode?.remove()
+    Utils.removeNodes([radials[index].node, radials[index].componentSetNode])
   } 
   catch (e) {
     console.warn('Error deleting node:' + JSON.stringify(e))
   }
   finally {
     radials.splice(index, 1)
-    resizeMenu()
-    centerRadialsInMenu()
-    repositionRadialFrames()
+    updateRadialMenuLayout()
   }
 }
 
@@ -167,68 +171,109 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const size = config.size
   const perSegmentSweep = config.sweep / config.numSegments
 
-  let container = figma.createFrame()
-  container.name = name
-  container.fills = []
-  container.clipsContent = false
-  container.resize(size, size)
+  const radialContainer = figma.createFrame()
+  radialContainer.name = name
+  radialContainer.fills = []
+  radialContainer.clipsContent = false
+  radialContainer.resize(size, size)
 
-  let radialCenter: Vector = {
-    x: size / 2,
-    y: size / 2
+  const center = size / 2
+  
+  const ellipse: EllipseNode = createArc(config)
+  radialContainer.appendChild(ellipse)
+  ellipse.x = ellipse.y = 0
+
+  // const refSegmentVector: VectorNode = figma.flatten([arc])
+  
+  const arc = figma.flatten([ellipse])
+  console.log('Flatten 1')
+  radialContainer.appendChild(arc)
+
+  const gapRect1 = figma.createRectangle()
+  radialContainer.appendChild(gapRect1)
+  gapRect1.x = gapRect1.y = center
+  gapRect1.resize((config.size / 2) + 10, config.gap / 2)
+
+  const gapRect2 = gapRect1.clone()
+  radialContainer.appendChild(gapRect2)
+  const angleOffset = Utils.angleOfArc(config.size / 2, config.gap / 2)
+  Utils.rotateAroundRelativePoint(gapRect2, {x: center, y: center}, perSegmentSweep - angleOffset)
+
+  let arcGroup = figma.group([gapRect1, gapRect2, arc], radialContainer)
+
+  let arcFrame = figma.createFrame()
+  radialContainer.appendChild(arcFrame)
+  arcFrame.fills = []
+  arcFrame.x = arcGroup.x
+  arcFrame.y = arcGroup.y
+  arcFrame.appendChild(arcGroup)
+  arcGroup.x = arcGroup.y = 0
+  arcGroup.x -= arc.x
+  arcFrame.x += arc.x
+  arcFrame.resize(arc.width, arc.height)
+  let subtract: BooleanOperationNode = figma.createBooleanOperation()
+  subtract.name = 'Subtract'
+  subtract.booleanOperation = 'SUBTRACT'
+  arcFrame.appendChild(subtract)
+  // for (let child of arcGroup.children) {
+  //   subtract.appendChild(child)
+  // }
+  console.log(subtract)
+  try {
+    const arcWithGap: VectorNode = figma.flatten([subtract], arcFrame)
+    arcWithGap.resize(arcFrame.width, arcWithGap.height)
+    console.log('Flatten 2')
+  }
+  catch (e) {
+    console.log(e)
   }
   
-  let refSegment = createArc(config)
-  refSegment.x = refSegment.y = 0
-  container.appendChild(refSegment)
-  
-  let refSegmentVector = figma.flatten([refSegment])
-  let refPosition: Vector = {
-    x: refSegmentVector.x,
-    y: refSegmentVector.y
-  }
 
-  const segmentComponents = createSegmentComponentSet(name + ' Segment', refSegmentVector)
-  segmentComponents.x = container.x - segmentComponents.width - 200
-  segmentComponents.y = container.y
-  refSegmentVector.remove()
+  const segmentComponents = createSegmentComponentSet(arcFrame, config)
+  segmentComponents.name = name + ' Segment'
+  segmentComponents.x = radialContainer.x - segmentComponents.width - 200
+  segmentComponents.y = radialContainer.y
 
-  let segmentInstance = segmentComponents.defaultVariant.createInstance()
-  segmentInstance.name = 'Segment 1'
-  container.appendChild(segmentInstance)
-  segmentInstance.x = refPosition.x
-  segmentInstance.y = refPosition.y
+  const segmentInstance = segmentComponents.defaultVariant.createInstance()
+  segmentInstance.x = arcFrame.x
+  segmentInstance.y = arcFrame.y
 
+  const segmentInstances: InstanceNode[] = []
+  segmentInstances.push(segmentInstance)
   for (let i = 1; i < config.numSegments; i++) {
     let newSegmentInstance = segmentInstance.clone()
-    newSegmentInstance.name = 'Segment ' + (i + 1)
-    container.appendChild(newSegmentInstance)
-    let rotation = (perSegmentSweep * i)
-    Utils.rotateAroundRelativePoint(newSegmentInstance, radialCenter, rotation)
+    segmentInstances.push(newSegmentInstance)
   }
 
+  for (let i = 0; i < config.numSegments; i++) {
+    segmentInstances[i].name = 'Segment ' + (i + 1)
+    radialContainer.appendChild(segmentInstances[i])
+    Utils.rotateAroundRelativePoint(segmentInstances[i], {x: center, y: center}, config.rotation + (perSegmentSweep * i))
+  }
+
+  Utils.removeNodes([arcFrame])
+
   return {
-    node: container,
+    node: radialContainer,
     config: config,
     componentSetNode: segmentComponents
   }
   
 }
 
-function createSegmentComponentSet(name: string, refArc: VectorNode) {
-  let width = refArc.width ? refArc.width : 0.01
-  let height = refArc.height ? refArc.height : 0.01
+function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
+  let width = arcFrame.width ? arcFrame.width : 0.01 // must be >= 0.01 else Figma throws an error
+  let height = arcFrame.height ? arcFrame.height : 0.01 // must be >= 0.01 else Figma throws an error
 
-  const unfocusedSegment = refArc.clone()
+  const unfocusedSegment = arcFrame.children[0] as VectorNode
 
   const unfocusedComponent = figma.createComponent()
   unfocusedComponent.name = 'Focused=No'
   unfocusedComponent.resize(width, height)
   unfocusedComponent.x = unfocusedSegment.x + 2000
   unfocusedComponent.appendChild(unfocusedSegment)
-  unfocusedSegment.x = unfocusedSegment.y = 0
 
-  const focusedSegment = refArc.clone()
+  const focusedSegment = unfocusedSegment.clone()
   focusedSegment.fills = [{
     type: 'SOLID',
     color: convertHexColorToRgbColor('ffffff') as RGB
@@ -240,10 +285,8 @@ function createSegmentComponentSet(name: string, refArc: VectorNode) {
   focusedComponent.x = unfocusedComponent.x
   focusedComponent.y = unfocusedComponent.y + unfocusedComponent.height + 100
   focusedComponent.appendChild(focusedSegment)
-  focusedSegment.x = focusedSegment.y = 0
 
   const componentSet = figma.combineAsVariants([unfocusedComponent, focusedComponent], figma.currentPage)
-  componentSet.name = name
   componentSet.layoutMode = 'VERTICAL'
   componentSet.primaryAxisSizingMode = 'AUTO'
   componentSet.counterAxisSizingMode = 'AUTO'
@@ -273,7 +316,7 @@ function createSegmentComponentSet(name: string, refArc: VectorNode) {
 }
 
 function createArc(config: RadialConfig): EllipseNode {
-  const startAngle = config.rotation
+  // const startAngle = config.rotation
   const perArcSweep = config.sweep / config.numSegments
 
   const ellipse = figma.createEllipse()
@@ -294,12 +337,20 @@ function createArc(config: RadialConfig): EllipseNode {
   ellipse.strokeAlign = 'CENTER'
 
   ellipse.arcData = {
-    startingAngle: Utils.degreesToRadians(startAngle),
-    endingAngle: Utils.degreesToRadians(startAngle + perArcSweep),
+    startingAngle: 0,
+    endingAngle: Utils.degreesToRadians(perArcSweep),
     innerRadius: config.innerOffset
   }
 
   return ellipse
+}
+
+function updateRadialMenuLayout() {
+  if (!radialMenu.removed) {
+    resizeMenu()
+    centerRadialsInMenu()
+    repositionRadialFrames()
+  }
 }
 
 function copyRadialVisuals(from: Radial, to: Radial) {
@@ -310,11 +361,11 @@ function copyRadialVisuals(from: Radial, to: Radial) {
       toSegment.fills = fromSegment.fills
       toSegment.effects = fromSegment.effects
       toSegment.strokes = fromSegment.strokes
-      // toSegment.strokeWeight = fromSegment.strokeWeight // config value overrides this
+      // toSegment.strokeWeight = fromSegment.strokeWeight *** config value overrides this ***
       toSegment.strokeJoin = fromSegment.strokeJoin
       toSegment.strokeAlign = fromSegment.strokeAlign
       toSegment.dashPattern = fromSegment.dashPattern
-      // toSegment.strokeGeometry = fromSegment.strokeGeometry // cannot be copied
+      // toSegment.strokeGeometry = fromSegment.strokeGeometry *** cannot be copied ***
       toSegment.strokeCap = fromSegment.strokeCap
       toSegment.strokeMiterLimit = fromSegment.strokeMiterLimit
     }
