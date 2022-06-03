@@ -1,3 +1,5 @@
+import { convertHexColorToRgbColor } from "@create-figma-plugin/utilities";
+
 export class Utils {
 
   static degreesToRadians(degrees: number) {
@@ -38,5 +40,12 @@ export class Utils {
     console.log(degrees)
     return degrees
   }
+
+  static setSolidFill(node: any, hex: string) {
+    node.fills = [{
+      type: 'SOLID',
+      color: convertHexColorToRgbColor(hex) as RGB
+    }]
+  } 
 
 }

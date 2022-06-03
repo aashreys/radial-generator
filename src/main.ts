@@ -179,48 +179,30 @@ function createRadial(name: string, config: RadialConfig): Radial {
 
   const center = size / 2
   
-  const ellipse: EllipseNode = createArc(config)
+  const ellipse: EllipseNode = createArcEllipse(config.size, 0, perSegmentSweep, config.innerOffset, true)
+
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
 
   // const refSegmentVector: VectorNode = figma.flatten([arc])
   
   const arc = figma.flatten([ellipse])
-  console.log('Flatten 1')
   radialContainer.appendChild(arc)
 
-  const gapRect1 = figma.createRectangle()
-  radialContainer.appendChild(gapRect1)
-  gapRect1.x = gapRect1.y = center
-  gapRect1.resize((config.size / 2) + 10, config.gap / 2 > 0 ? config.gap / 2 : 0.01)
+  const gapAngle = Utils.arcAngle(config.size / 2, config.gap)
 
-  const gapRect2 = gapRect1.clone()
-  radialContainer.appendChild(gapRect2)
-  const angleOffset = Utils.arcAngle(config.size / 2, config.gap / 2)
-  Utils.rotateAroundRelativePoint(gapRect2, {x: center, y: center}, perSegmentSweep - angleOffset)
+  const gapArc1 = createArcEllipse(config.size, 0, gapAngle, config.innerOffset, true)
+  const gapArc2 = createArcEllipse(config.size, perSegmentSweep - gapAngle, gapAngle, config.innerOffset, true)
 
-  let arcGroup = figma.group([gapRect1, gapRect2, arc], radialContainer)
+  radialContainer.appendChild(gapArc1)
+  radialContainer.appendChild(gapArc2)
+  gapArc1.x = gapArc1.y = gapArc2.x = gapArc2.y = 0
 
-  let arcFrame = figma.createFrame()
-  arcFrame.clipsContent = false
-  radialContainer.appendChild(arcFrame)
-  arcFrame.fills = []
-  arcFrame.x = arcGroup.x
-  arcFrame.y = arcGroup.y
-  arcFrame.resizeWithoutConstraints(arc.width, arc.height)
-  arcFrame.appendChild(arcGroup)  
-  arcGroup.x = arcGroup.y = 0
-  let delta = arc.x
-  arcGroup.x -= delta
-  arcFrame.x += delta
-  
-  let subtract = figma.subtract([...arcGroup.children], arcFrame)
-  subtract.name = 'Subtract'
-  subtract.booleanOperation = 'SUBTRACT'
-  arcFrame.appendChild(subtract)
-
-  const arcWithGap: VectorNode = figma.flatten([subtract], arcFrame)
-  arcWithGap.resize(arcFrame.width, arcWithGap.height)
+  const arcFrame = figma.createFrame()
+  arcFrame.resize(arc.width, arc.height)
+  arcFrame.x = arc.x
+  arcFrame.y = arc.y
+  figma.flatten([figma.subtract([gapArc1, gapArc2, arc], arcFrame)], arcFrame)
 
   const segmentComponents = createSegmentComponentSet(arcFrame, config)
   segmentComponents.name = name + ' Segment'
@@ -319,14 +301,27 @@ function createArc(config: RadialConfig): EllipseNode {
     color: convertHexColorToRgbColor('d9d9d9') as RGB
   }]
 
-  ellipse.strokeWeight = config.gap
-  ellipse.strokeAlign = 'CENTER'
-
   ellipse.arcData = {
     startingAngle: 0,
     endingAngle: Utils.degreesToRadians(perArcSweep),
     innerRadius: config.innerOffset
   }
+
+  return ellipse
+}
+
+function createArcEllipse(size: number, startingAngle: number, sweep: number, offset: number, isFilled: boolean): EllipseNode {
+  console.log(`Starting Angle: ${startingAngle}, Sweep: ${sweep}`)
+  const ellipse = figma.createEllipse()
+  ellipse.resize(size, size)
+
+  ellipse.arcData = {
+    startingAngle: Utils.degreesToRadians(startingAngle),
+    endingAngle: Utils.degreesToRadians(startingAngle + sweep),
+    innerRadius: offset
+  }
+
+  if (isFilled) Utils.setSolidFill(ellipse, 'd9d9d9')
 
   return ellipse
 }
