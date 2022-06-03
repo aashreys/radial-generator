@@ -179,20 +179,18 @@ function createRadial(name: string, config: RadialConfig): Radial {
 
   const center = size / 2
   
-  const ellipse: EllipseNode = createArcEllipse(config.size, 0, perSegmentSweep, config.innerOffset, true)
+  const ellipse: EllipseNode = createArcEllipse(config.size, 0, perSegmentSweep, config.innerOffset, 'd9d9d9')
 
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
-
-  // const refSegmentVector: VectorNode = figma.flatten([arc])
   
   const arc = figma.flatten([ellipse])
   radialContainer.appendChild(arc)
 
   const gapAngle = Utils.arcAngle(config.size / 2, config.gap)
 
-  const gapArc1 = createArcEllipse(config.size, 0, gapAngle, config.innerOffset, true)
-  const gapArc2 = createArcEllipse(config.size, perSegmentSweep - gapAngle, gapAngle, config.innerOffset, true)
+  const gapArc1 = createArcEllipse(config.size, 0, gapAngle, config.innerOffset, 'd9d9d9')
+  const gapArc2 = createArcEllipse(config.size, perSegmentSweep - gapAngle, gapAngle, config.innerOffset, 'd9d9d9')
 
   radialContainer.appendChild(gapArc1)
   radialContainer.appendChild(gapArc2)
@@ -249,10 +247,7 @@ function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
   unfocusedComponent.appendChild(unfocusedSegment)
 
   const focusedSegment = unfocusedSegment.clone()
-  focusedSegment.fills = [{
-    type: 'SOLID',
-    color: convertHexColorToRgbColor('ffffff') as RGB
-  }]
+  Utils.setSolidFill(focusedSegment, 'ffffff')
 
   const focusedComponent = figma.createComponent()
   focusedComponent.name = 'Focused=Yes'
@@ -290,28 +285,7 @@ function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
   return componentSet
 }
 
-function createArc(config: RadialConfig): EllipseNode {
-  const perArcSweep = config.sweep / config.numSegments
-
-  const ellipse = figma.createEllipse()
-  ellipse.resize(config.size, config.size)
-
-  ellipse.fills = [{
-    type: 'SOLID',
-    color: convertHexColorToRgbColor('d9d9d9') as RGB
-  }]
-
-  ellipse.arcData = {
-    startingAngle: 0,
-    endingAngle: Utils.degreesToRadians(perArcSweep),
-    innerRadius: config.innerOffset
-  }
-
-  return ellipse
-}
-
-function createArcEllipse(size: number, startingAngle: number, sweep: number, offset: number, isFilled: boolean): EllipseNode {
-  console.log(`Starting Angle: ${startingAngle}, Sweep: ${sweep}`)
+function createArcEllipse(size: number, startingAngle: number, sweep: number, offset: number, hex?: string): EllipseNode {
   const ellipse = figma.createEllipse()
   ellipse.resize(size, size)
 
@@ -321,7 +295,7 @@ function createArcEllipse(size: number, startingAngle: number, sweep: number, of
     innerRadius: offset
   }
 
-  if (isFilled) Utils.setSolidFill(ellipse, 'd9d9d9')
+  if (hex) Utils.setSolidFill(ellipse, hex)
 
   return ellipse
 }

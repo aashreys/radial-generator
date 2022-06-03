@@ -37,7 +37,6 @@ export class Utils {
     let sine = (distance / 2) / radius
     let radians = Math.asin(sine)
     let degrees = Utils.radiansToDegrees(radians)
-    console.log(degrees)
     return degrees
   }
 
