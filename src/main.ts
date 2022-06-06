@@ -1,4 +1,4 @@
-import { convertHexColorToRgbColor, emit, on, showUI } from "@create-figma-plugin/utilities"
+import { emit, on, showUI } from "@create-figma-plugin/utilities"
 import { Event } from "./events"
 import { Radial } from "./models/radial"
 import { RadialConfig } from "./models/radial_config"
@@ -23,13 +23,13 @@ export default function () { showUI({ width: 240, height: 480 }) }
 
 on(Event.RADIAL_REQUESTED, onRadialRequested)
 
-on(Event.RADIAL_DUPLICATE_REQUESTED, (data) => onRadialDuplicateRequested(data.index))
+on(Event.DUPLICATE_RADIAL_REQUESTED, (data) => onDuplicateRadialRequested(data.index))
 
 on(Event.RADIAL_UPDATED, (data) => onRadialUpdated(data.index, data.newConfig))
 
 on(Event.RADIAL_REMOVED, (data) => onRadialRemoved(data.index))
 
-function createRadialFrames() {
+function createRadialMenu() {
   if (!radialMenu || radialMenu.removed) {
     radialMenu = figma.createFrame()
     radialMenu.name = 'Radial Menu'
@@ -49,38 +49,38 @@ function createRadialFrames() {
   }
 }
 
-function deleteRadialFrames() {
+function deleteRadialMenu() {
   Utils.removeNodes([radialMenu, radialComponents])
 }
 
-function repositionRadialFrames() {
+function repositionRadialComponents() {
   radialComponents.x = radialMenu.x + radialMenu.width + 200
   radialComponents.y = radialMenu.y
 }
 
 function onRadialRequested() {
-  createRadialFrames()
-  const radial = addRadialToMenu(DEFAULT_CONFIG)
+  createRadialMenu()
+  const radial = addRadial(DEFAULT_CONFIG)
   figma.viewport.scrollAndZoomIntoView([radialMenu])
   emit(Event.RADIAL_ADDED, { config: radial.config })
 }
 
-function onRadialDuplicateRequested(index: number) {
+function onDuplicateRadialRequested(index: number) {
   let configToDuplicate = radials[index].config
-  insertRadialInMenu(index + 1, configToDuplicate)
+  insertRadial(index + 1, configToDuplicate)
 }
 
 function onRadialUpdated(index: number, newConfig: RadialConfig) {
-  updateRadialInMenu(index, newConfig)
+  updateRadial(index, newConfig)
   figma.viewport.scrollAndZoomIntoView([radialMenu])
 }
 
 function onRadialRemoved(index: number) {
-  removeRadialInMenu(index)
-  if (radials.length === 0) deleteRadialFrames()
+  removeRadial(index)
+  if (radials.length === 0) deleteRadialMenu()
 }
 
-function addRadialToMenu(config: RadialConfig): Radial {
+function addRadial(config: RadialConfig): Radial {
   const radial: Radial = createRadial('Radial ' + (radials.length + 1), config)
   radials.push(radial)
   
@@ -92,7 +92,7 @@ function addRadialToMenu(config: RadialConfig): Radial {
   return radial
 }
 
-function insertRadialInMenu(index: number, config: RadialConfig): Radial {
+function insertRadial(index: number, config: RadialConfig): Radial {
   const radial: Radial = createRadial('Radial ' + (index + 1), config)
   radials.splice(index, 0, radial)
 
@@ -104,7 +104,7 @@ function insertRadialInMenu(index: number, config: RadialConfig): Radial {
   return radial
 }
 
-function updateRadialInMenu(index: number, newConfig: RadialConfig): Radial {
+function updateRadial(index: number, newConfig: RadialConfig): Radial {
   const newRadial: Radial = createRadial('Radial ' + (index + 1), newConfig)
   try {
     copyRadialVisuals(radials[index], newRadial)
@@ -126,7 +126,7 @@ function updateRadialInMenu(index: number, newConfig: RadialConfig): Radial {
   }
 }
 
-function removeRadialInMenu(index: number): void {
+function removeRadial(index: number): void {
   try {
     Utils.removeNodes([radials[index].node, radials[index].componentSetNode])
   } 
@@ -304,7 +304,7 @@ function updateRadialMenuLayout() {
   if (!radialMenu.removed) {
     resizeMenu()
     centerRadialsInMenu()
-    repositionRadialFrames()
+    repositionRadialComponents()
   }
 }
 

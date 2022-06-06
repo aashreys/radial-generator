@@ -42,7 +42,7 @@ export function RadialList(props: any) {
     let newConfigs = configs.slice()
     newConfigs.splice(index + 1, 0 , duplicateConfig)
     setConfigs(newConfigs)
-    emit(Event.RADIAL_DUPLICATE_REQUESTED, { index : index })
+    emit(Event.DUPLICATE_RADIAL_REQUESTED, { index : index })
   }
 
   function addRadialConfig(config: RadialConfig, index?: number) {
