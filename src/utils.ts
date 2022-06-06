@@ -40,11 +40,13 @@ export class Utils {
     return degrees
   }
 
-  static setSolidFill(node: any, hex: string) {
-    node.fills = [{
-      type: 'SOLID',
-      color: convertHexColorToRgbColor(hex) as RGB
-    }]
-  } 
+  static setSolidFill(hex: string, ...nodes: any) {
+    for (let node of nodes) {
+      node.fills = [{
+        type: 'SOLID',
+        color: convertHexColorToRgbColor(hex) as RGB
+      }]
+    }
+  }
 
 }

@@ -247,7 +247,7 @@ function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
   unfocusedComponent.appendChild(unfocusedSegment)
 
   const focusedSegment = unfocusedSegment.clone()
-  Utils.setSolidFill(focusedSegment, 'ffffff')
+  Utils.setSolidFill('ffffff', focusedSegment)
 
   const focusedComponent = figma.createComponent()
   focusedComponent.name = 'Focused=Yes'
@@ -295,7 +295,7 @@ function createArcEllipse(size: number, startingAngle: number, sweep: number, of
     innerRadius: offset
   }
 
-  if (hex) Utils.setSolidFill(ellipse, hex)
+  if (hex) Utils.setSolidFill(hex, ellipse)
 
   return ellipse
 }
