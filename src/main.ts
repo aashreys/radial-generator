@@ -178,8 +178,10 @@ function createRadial(name: string, config: RadialConfig): Radial {
   radialContainer.resize(size, size)
 
   const center = size / 2
+
+  const gapAngle = Utils.arcAngle(config.size / 2, config.gap)
   
-  const ellipse: EllipseNode = createArcEllipse(config.size, 0, perSegmentSweep, config.innerOffset, 'd9d9d9')
+  const ellipse: EllipseNode = createArcEllipse(config.size, gapAngle, perSegmentSweep - gapAngle, config.innerOffset, 'd9d9d9')
 
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
@@ -187,29 +189,14 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const arc = figma.flatten([ellipse])
   radialContainer.appendChild(arc)
 
-  const gapAngle = Utils.arcAngle(config.size / 2, config.gap)
-
-  const gapArc1 = createArcEllipse(config.size, 0, gapAngle, config.innerOffset, 'd9d9d9')
-  const gapArc2 = createArcEllipse(config.size, perSegmentSweep - gapAngle, gapAngle, config.innerOffset, 'd9d9d9')
-
-  radialContainer.appendChild(gapArc1)
-  radialContainer.appendChild(gapArc2)
-  gapArc1.x = gapArc1.y = gapArc2.x = gapArc2.y = 0
-
-  const arcFrame = figma.createFrame()
-  arcFrame.resize(arc.width, arc.height)
-  arcFrame.x = arc.x
-  arcFrame.y = arc.y
-  figma.flatten([figma.subtract([gapArc1, gapArc2, arc], arcFrame)], arcFrame)
-
-  const segmentComponents = createSegmentComponentSet(arcFrame, config)
+  const segmentComponents = createSegmentComponentSet(arc, config)
   segmentComponents.name = name + ' Segment'
   segmentComponents.x = radialContainer.x - segmentComponents.width - 200
   segmentComponents.y = radialContainer.y
 
   const segmentInstance = segmentComponents.defaultVariant.createInstance()
-  segmentInstance.x = arcFrame.x
-  segmentInstance.y = arcFrame.y
+  segmentInstance.x = arc.x
+  segmentInstance.y = arc.y
 
   const segmentInstances: InstanceNode[] = []
   segmentInstances.push(segmentInstance)
@@ -221,10 +208,10 @@ function createRadial(name: string, config: RadialConfig): Radial {
   for (let i = 0; i < config.numSegments; i++) {
     segmentInstances[i].name = 'Segment ' + (i + 1)
     radialContainer.appendChild(segmentInstances[i])
-    Utils.rotateAroundRelativePoint(segmentInstances[i], {x: center, y: center}, config.rotation + (perSegmentSweep * i))
+    Utils.rotateAroundRelativePoint(segmentInstances[i], {x: center, y: center}, config.rotation + ((perSegmentSweep) * i))
   }
 
-  Utils.removeNodes([arcFrame])
+  Utils.removeNodes([arc])
 
   return {
     node: radialContainer,
@@ -234,17 +221,18 @@ function createRadial(name: string, config: RadialConfig): Radial {
   
 }
 
-function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
-  let width = arcFrame.width ? arcFrame.width : 0.01 // must be >= 0.01 else Figma throws an error
-  let height = arcFrame.height ? arcFrame.height : 0.01 // must be >= 0.01 else Figma throws an error
+function createSegmentComponentSet(arc: VectorNode, config: RadialConfig) {
+  let width = arc.width ? arc.width : 0.01 // must be >= 0.01 else Figma throws an error
+  let height = arc.height ? arc.height : 0.01 // must be >= 0.01 else Figma throws an error
 
-  const unfocusedSegment = arcFrame.children[0] as VectorNode
+  const unfocusedSegment = arc.clone()
 
   const unfocusedComponent = figma.createComponent()
   unfocusedComponent.name = 'Focused=No'
   unfocusedComponent.resize(width, height)
   unfocusedComponent.x = unfocusedSegment.x + 2000
   unfocusedComponent.appendChild(unfocusedSegment)
+  unfocusedSegment.x = unfocusedSegment.y = 0
 
   const focusedSegment = unfocusedSegment.clone()
   Utils.setSolidFill('ffffff', focusedSegment)
@@ -285,13 +273,18 @@ function createSegmentComponentSet(arcFrame: FrameNode, config: RadialConfig) {
   return componentSet
 }
 
-function createArcEllipse(size: number, startingAngle: number, sweep: number, offset: number, hex?: string): EllipseNode {
+function createArcEllipse(
+  size: number, 
+  startingAngle: number, 
+  endingAngle: number,
+  offset: number, 
+  hex?: string): EllipseNode {
   const ellipse = figma.createEllipse()
   ellipse.resize(size, size)
 
   ellipse.arcData = {
     startingAngle: Utils.degreesToRadians(startingAngle),
-    endingAngle: Utils.degreesToRadians(startingAngle + sweep),
+    endingAngle: Utils.degreesToRadians(endingAngle),
     innerRadius: offset
   }
 
