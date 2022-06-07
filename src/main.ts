@@ -16,7 +16,7 @@ const DEFAULT_CONFIG: RadialConfig = {
   sweep: 360,
   rotation: 0,
   innerOffset: 0.5,
-  gap: 8
+  gap: 10
 }
 
 export default function () { showUI({ width: 240, height: 480 }) }
@@ -71,7 +71,7 @@ function onDuplicateRadialRequested(index: number) {
 }
 
 function onRadialUpdated(index: number, newConfig: RadialConfig) {
-  updateRadial(index, newConfig)
+  replaceRadial(index, newConfig)
   figma.viewport.scrollAndZoomIntoView([radialMenu])
 }
 
@@ -104,7 +104,7 @@ function insertRadial(index: number, config: RadialConfig): Radial {
   return radial
 }
 
-function updateRadial(index: number, newConfig: RadialConfig): Radial {
+function replaceRadial(index: number, newConfig: RadialConfig): Radial {
   const newRadial: Radial = createRadial('Radial ' + (index + 1), newConfig)
   try {
     copyRadialVisuals(radials[index], newRadial)
@@ -168,28 +168,30 @@ function centerRadialsInMenu() {
 }
 
 function createRadial(name: string, config: RadialConfig): Radial {
-  const size = config.size
   const perSegmentSweep = config.sweep / config.numSegments
 
   const radialContainer = figma.createFrame()
   radialContainer.name = name
   radialContainer.fills = []
   radialContainer.clipsContent = false
-  radialContainer.resize(size, size)
+  radialContainer.resize(config.size, config.size)
 
-  const center = size / 2
+  const center = config.size / 2
 
-  const gapAngle = Utils.arcAngle(config.size / 2, config.gap)
-  
-  const ellipse: EllipseNode = createArcEllipse(config.size, gapAngle, perSegmentSweep - gapAngle, config.innerOffset, 'd9d9d9')
+  const gapAngle = Utils.arcAngle(config.size / 2, config.gap) / 2
+
+  const startAngle = gapAngle
+  const endAngle = (gapAngle * 2) < perSegmentSweep ? perSegmentSweep - gapAngle : gapAngle
+
+  const ellipse: EllipseNode = createArcEllipse(config.size, startAngle, endAngle, config.innerOffset, 'd9d9d9')
 
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
-  
+
   const arc = figma.flatten([ellipse])
   radialContainer.appendChild(arc)
 
-  const segmentComponents = createSegmentComponentSet(arc, config)
+  const segmentComponents = createRadialComponents(arc)
   segmentComponents.name = name + ' Segment'
   segmentComponents.x = radialContainer.x - segmentComponents.width - 200
   segmentComponents.y = radialContainer.y
@@ -221,7 +223,7 @@ function createRadial(name: string, config: RadialConfig): Radial {
   
 }
 
-function createSegmentComponentSet(arc: VectorNode, config: RadialConfig) {
+function createRadialComponents(arc: VectorNode): ComponentSetNode {
   let width = arc.width ? arc.width : 0.01 // must be >= 0.01 else Figma throws an error
   let height = arc.height ? arc.height : 0.01 // must be >= 0.01 else Figma throws an error
 
@@ -306,6 +308,9 @@ function copyRadialVisuals(from: Radial, to: Radial) {
     for (let i in to.componentSetNode.children) {
       let toSegment = (to.componentSetNode.children[i] as ComponentNode).children[0] as VectorNode
       let fromSegment = (from.componentSetNode.children[i] as ComponentNode).children[0] as VectorNode
+
+      toSegment.opacity = fromSegment.opacity
+
       toSegment.fills = fromSegment.fills
       toSegment.effects = fromSegment.effects
       toSegment.strokes = fromSegment.strokes
