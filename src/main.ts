@@ -144,7 +144,7 @@ function resizeMenu() {
     x: radialMenu.x + radialMenu.width / 2,
     y: radialMenu.y + radialMenu.height / 2
   }
-  let largestSize = 0.01
+  let largestSize = ensureMinDimension()
   for (let radial of radials) {
     largestSize = radial.config.size > largestSize ? radial.config.size : largestSize
   }
@@ -168,22 +168,29 @@ function centerRadialsInMenu() {
 }
 
 function createRadial(name: string, config: RadialConfig): Radial {
+  const size = ensureMinDimension(config.size)
+  const gap = config.gap > size ? size : config.gap // gap cannot exceed radial size
   const perSegmentSweep = config.sweep / config.numSegments
+  const centerXY = config.size / 2
 
   const radialContainer = figma.createFrame()
   radialContainer.name = name
   radialContainer.fills = []
   radialContainer.clipsContent = false
-  radialContainer.resize(config.size, config.size)
+  radialContainer.resize(size, size)
 
-  const center = config.size / 2
-
-  const gapAngle = Utils.arcAngle(config.size / 2, config.gap) / 2
-
+  const gapAngle = Utils.arcAngle(size / 2, gap) / 2
   const startAngle = gapAngle
   const endAngle = (gapAngle * 2) < perSegmentSweep ? perSegmentSweep - gapAngle : gapAngle
 
-  const ellipse: EllipseNode = createArcEllipse(config.size, startAngle, endAngle, config.innerOffset, 'd9d9d9')
+  const ellipse: EllipseNode = createArcEllipse(
+    size, 
+    startAngle, 
+    endAngle, 
+    config.innerOffset, 
+    'd9d9d9'
+  )
+    
 
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
@@ -210,7 +217,7 @@ function createRadial(name: string, config: RadialConfig): Radial {
   for (let i = 0; i < config.numSegments; i++) {
     segmentInstances[i].name = 'Segment ' + (i + 1)
     radialContainer.appendChild(segmentInstances[i])
-    Utils.rotateAroundRelativePoint(segmentInstances[i], {x: center, y: center}, config.rotation + ((perSegmentSweep) * i))
+    Utils.rotateAroundRelativePoint(segmentInstances[i], {x: centerXY, y: centerXY}, config.rotation + ((perSegmentSweep) * i))
   }
 
   Utils.removeNodes([arc])
@@ -224,8 +231,8 @@ function createRadial(name: string, config: RadialConfig): Radial {
 }
 
 function createRadialComponents(arc: VectorNode): ComponentSetNode {
-  let width = arc.width ? arc.width : 0.01 // must be >= 0.01 else Figma throws an error
-  let height = arc.height ? arc.height : 0.01 // must be >= 0.01 else Figma throws an error
+  let width = ensureMinDimension(arc.width)
+  let height = ensureMinDimension(arc.height)
 
   const unfocusedSegment = arc.clone()
 
@@ -325,5 +332,14 @@ function copyRadialVisuals(from: Radial, to: Radial) {
   }
   catch (e) {
     console.warn('Error while copying visuals: ' + JSON.stringify(e))
+  }
+}
+
+function ensureMinDimension(currentDimension?: number) {
+  const minDimension = 0.01 // minimum size allowed by Figma for width and height
+  if (currentDimension) {
+    return currentDimension >= minDimension ? currentDimension : minDimension
+  } else {
+    return minDimension
   }
 }
