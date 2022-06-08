@@ -183,14 +183,7 @@ function createRadial(name: string, config: RadialConfig): Radial {
   const startAngle = gapAngle
   const endAngle = (gapAngle * 2) < perSegmentSweep ? perSegmentSweep - gapAngle : gapAngle
 
-  const ellipse: EllipseNode = createArcEllipse(
-    size, 
-    startAngle, 
-    endAngle, 
-    config.innerOffset, 
-    'd9d9d9'
-  )
-    
+  const ellipse: EllipseNode = createArcEllipse(size, startAngle, endAngle, config.innerOffset, 'd9d9d9')  
 
   radialContainer.appendChild(ellipse)
   ellipse.x = ellipse.y = 0
@@ -321,7 +314,7 @@ function copyRadialVisuals(from: Radial, to: Radial) {
       toSegment.fills = fromSegment.fills
       toSegment.effects = fromSegment.effects
       toSegment.strokes = fromSegment.strokes
-      // toSegment.strokeWeight = fromSegment.strokeWeight *** config value overrides this ***
+      toSegment.strokeWeight = fromSegment.strokeWeight
       toSegment.strokeJoin = fromSegment.strokeJoin
       toSegment.strokeAlign = fromSegment.strokeAlign
       toSegment.dashPattern = fromSegment.dashPattern
