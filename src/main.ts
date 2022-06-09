@@ -50,7 +50,7 @@ function createRadialMenu() {
 }
 
 function deleteRadialMenu() {
-  Utils.removeNodes([radialMenu, radialComponents])
+  Utils.removeNodes(radialMenu, radialComponents)
 }
 
 function repositionRadialComponents() {
@@ -108,7 +108,7 @@ function replaceRadial(index: number, newConfig: RadialConfig): Radial {
   const newRadial: Radial = createRadial('Radial ' + (index + 1), newConfig)
   try {
     copyRadialVisuals(radials[index], newRadial)
-    Utils.removeNodes([radials[index].node, radials[index].componentSetNode])
+    Utils.removeNodes(radials[index].node, radials[index].componentSetNode)
   } 
   catch (e) {
     console.warn('Error deleting node:' + JSON.stringify(e))
@@ -128,7 +128,7 @@ function replaceRadial(index: number, newConfig: RadialConfig): Radial {
 
 function removeRadial(index: number): void {
   try {
-    Utils.removeNodes([radials[index].node, radials[index].componentSetNode])
+    Utils.removeNodes(radials[index].node, radials[index].componentSetNode)
   } 
   catch (e) {
     console.warn('Error deleting node:' + JSON.stringify(e))
@@ -213,7 +213,7 @@ function createRadial(name: string, config: RadialConfig): Radial {
     Utils.rotateAroundRelativePoint(segmentInstances[i], {x: centerXY, y: centerXY}, config.rotation + ((perSegmentSweep) * i))
   }
 
-  Utils.removeNodes([arc])
+  Utils.removeNodes(arc)
 
   return {
     node: radialContainer,

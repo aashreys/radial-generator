@@ -23,7 +23,7 @@ export class Utils {
     node.y = Math.round(figma.viewport.bounds.y + (figma.viewport.bounds.height / 2) - (node.height / 2))
   }
 
-  static removeNodes(nodes: SceneNode[]) {
+  static removeNodes(...nodes: SceneNode[]) {
     for (let node of nodes) {
       if (node && !node.removed) node.remove()
     }
@@ -66,7 +66,7 @@ export class Utils {
     return 2 * (Math.sin(radians) * radius)
   }
 
-  static setSolidFill(hex: string, ...nodes: any) {
+  static setSolidFill(hex: string, ...nodes: any[]) {
     for (let node of nodes) {
       node.fills = [{
         type: 'SOLID',
