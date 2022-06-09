@@ -309,18 +309,49 @@ function copyRadialVisuals(from: Radial, to: Radial) {
       let toSegment = (to.componentSetNode.children[i] as ComponentNode).children[0] as VectorNode
       let fromSegment = (from.componentSetNode.children[i] as ComponentNode).children[0] as VectorNode
 
+      let j = 0
+      // Blend-related properties
       toSegment.opacity = fromSegment.opacity
-
-      toSegment.fills = fromSegment.fills
+      console.log(j++)
+      toSegment.blendMode = fromSegment.blendMode
+      console.log(j++)
+      toSegment.isMask = fromSegment.isMask
+      console.log(j++)
       toSegment.effects = fromSegment.effects
+      console.log(j++)
+      toSegment.effectStyleId = fromSegment.effectStyleId
+      console.log(j++)
+
+      // Corner-related properties
+      toSegment.cornerRadius = fromSegment.cornerRadius
+      console.log(j++)
+      toSegment.cornerSmoothing = fromSegment.cornerSmoothing
+      console.log(j++)
+
+      // Geometry-related properties
+      toSegment.fills = fromSegment.fills
+      console.log(j++)
+      toSegment.fillStyleId = fromSegment.fillStyleId
+      console.log(j++)
+      // toSegment.fillGeometry = fromSegment.fillGeometry *** cannot be copied ***
+
       toSegment.strokes = fromSegment.strokes
+      console.log(j++)
+      toSegment.strokeStyleId = fromSegment.strokeStyleId
+      console.log(j++)
       toSegment.strokeWeight = fromSegment.strokeWeight
+      console.log(j++)
       toSegment.strokeJoin = fromSegment.strokeJoin
+      console.log(j++)
       toSegment.strokeAlign = fromSegment.strokeAlign
+      console.log(j++)
       toSegment.dashPattern = fromSegment.dashPattern
+      console.log(j++)
       // toSegment.strokeGeometry = fromSegment.strokeGeometry *** cannot be copied ***
       toSegment.strokeCap = fromSegment.strokeCap
+      console.log(j++)
       toSegment.strokeMiterLimit = fromSegment.strokeMiterLimit
+      console.log(j++)
     }
   }
   catch (e) {
