@@ -1,5 +1,3 @@
-import { emit } from "@create-figma-plugin/utilities";
-import { Event } from "./events";
 import { Radial } from "./models/radial";
 import { RadialConfig } from "./models/radial_config";
 import { Utils } from "./utils";
@@ -38,7 +36,8 @@ export class RadialManager {
   }
 
   public duplicateRadial(index: number) {
-    const dupeConfig = this.radials[index].config
+    const sourceRadial = this.radials[index]
+    const dupeConfig = sourceRadial.config
     const dupeIndex = index + 1
     
     // Create duplicate radial
@@ -46,7 +45,14 @@ export class RadialManager {
     const dupeRadial = this._createRadial(name, dupeConfig)
 
     // Position radial
-    this.centerAtRadial(dupeRadial, this.radials[index])
+    if (this.isRadialOnCanvas(sourceRadial)) {
+      const parent = sourceRadial.node.parent
+      parent?.insertChild(parent?.children.indexOf(sourceRadial.node) + 1, dupeRadial.node)
+      this.centerAtRadial(dupeRadial, sourceRadial)
+    } 
+    else {
+      this.centerInViewport(dupeRadial)
+    }
 
     // Add components
     this.initializeComponentsFrame().insertChild(dupeIndex, dupeRadial.componentSetNode)
@@ -65,8 +71,14 @@ export class RadialManager {
     const newRadial = this._createRadial(name, newConfig)
     
     // Position radial
-    if (this.isRadialOnCanvas(oldRadial)) this.centerAtRadial(newRadial, oldRadial)
-    else this.centerInViewport(newRadial)
+    if (this.isRadialOnCanvas(oldRadial)) {
+      const parent = oldRadial.node.parent
+      parent?.insertChild(parent?.children.indexOf(oldRadial.node) + 1, newRadial.node)
+      this.centerAtRadial(newRadial, oldRadial)
+    } 
+    else {
+      this.centerInViewport(newRadial)
+    }
 
     // Add components
     this.initializeComponentsFrame().insertChild(index, newRadial.componentSetNode)

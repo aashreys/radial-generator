@@ -7,6 +7,5 @@ export class Event {
   static RADIAL_REMOVED = 'RADIAL_REMOVED'
   static SELECTION_CHANGE: ArgFreeEventType = 'selectionchange'
   static PLUGIN_CLOSE: ArgFreeEventType = 'close'
-
-  static RADIAL_DELETED_ON_CANVAS = 'RADIAL_DELETED_ON_CANVAS'
+  
 }
