@@ -19,8 +19,12 @@ export class Utils {
   }
 
   static centerInViewport(node: SceneNode) {
-    node.x = Math.round(figma.viewport.bounds.x + (figma.viewport.bounds.width / 2) - (node.width / 2))
-    node.y = Math.round(figma.viewport.bounds.y + (figma.viewport.bounds.height / 2) - (node.height / 2))
+    this.centerAtPoint(node, {x: figma.viewport.bounds.x + (figma.viewport.bounds.width / 2), y: figma.viewport.bounds.y + (figma.viewport.bounds.height / 2)})
+  }
+
+  static centerAtPoint(node: SceneNode, point: Vector) {
+    node.x = point.x - (node.width / 2)
+    node.y = point.y - (node.height / 2)
   }
 
   static removeNodes(...nodes: SceneNode[]) {

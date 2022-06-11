@@ -63,7 +63,15 @@ export function RadialList(props: any) {
     emit(Event.RADIAL_UPDATED, { index: index, newConfig: newConfig })
   }
 
+  function onRadialDeletedOnCanvas(index: number) {
+    let newConfigs = configs.slice()
+    newConfigs.splice(index, 1)
+    setConfigs(newConfigs)
+  }
+
   on(Event.RADIAL_ADDED, (data) => addRadialConfig(data.config))
+
+  on(Event.RADIAL_DELETED_ON_CANVAS, (data) => onRadialDeletedOnCanvas(data.index))
   
   return (
     <div style='display: flex; flex-direction: column; padding-top: var(--space-extra-small); padding-bottom: var(--space-extra-small); padding-left: var(--space-extra-small); padding-right: var(--space-extra-small)'>
