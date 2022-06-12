@@ -120,6 +120,9 @@ export class RadialManager {
       this.componentsFrame = this.createComponentsFrame()
     }
     this.organizeRadialComponents(this.radials, this.componentsFrame as FrameNode)
+
+    // Remove components frame when last radial is removed
+    if (this.radials.length === 0) Utils.removeNodes(this.componentsFrame)
   }
 
   private _createRadial(config: RadialConfig): Radial {
