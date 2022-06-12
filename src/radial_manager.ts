@@ -18,9 +18,6 @@ export class RadialManager {
   }
 
   public createRadial(): Radial {
-    // Create radial component container since this might be the first radial
-    this.initializeComponentsFrame()
-
     // Create radial
     const radial = this._createRadial(this.DEFAULT_CONFIG)
 
@@ -33,8 +30,13 @@ export class RadialManager {
     // Add to radials list
     this.radials.push(radial)
 
-    // Name and parent radial nodes
-    this.nameAndParentRadialNodes()
+    // Perform housekeeping
+    this.nameRadialNodes(this.radials)
+    if (!this.componentsFrame || this.componentsFrame.removed) {
+      this.componentsFrame = this.createComponentsFrame()
+      this.positionComponentsRadial(this.componentsFrame, radial)
+    }
+    this.organizeRadialComponents(this.radials, this.componentsFrame as FrameNode)
 
     return radial
   }
@@ -45,7 +47,6 @@ export class RadialManager {
     const dupeIndex = index + 1
     
     // Create duplicate radial
-    const name = 'Radial ' + (dupeIndex + 1)
     const dupeRadial = this._createRadial(dupeConfig)
 
     // Position radial
@@ -61,8 +62,13 @@ export class RadialManager {
     // Add to radials list
     this.radials.splice(dupeIndex, 0, dupeRadial)
 
-    // Name radial nodes
-    this.nameAndParentRadialNodes()
+    // Perform housekeeping
+    this.nameRadialNodes(this.radials)
+    if (!this.componentsFrame || this.componentsFrame.removed) {
+      this.componentsFrame = this.createComponentsFrame()
+      this.positionComponentsRadial(this.componentsFrame, dupeRadial)
+    }
+    this.organizeRadialComponents(this.radials, this.componentsFrame as FrameNode)
 
     return dupeRadial
   }
@@ -92,8 +98,13 @@ export class RadialManager {
     // Remove old radial and components from canvas
     this.removeFromCanvas(oldRadial)
 
-    // Name radial nodes
-    this.nameAndParentRadialNodes()
+    // Perform housekeeping
+    this.nameRadialNodes(this.radials)
+    if (!this.componentsFrame || this.componentsFrame.removed) {
+      this.componentsFrame = this.createComponentsFrame()
+      this.positionComponentsRadial(this.componentsFrame, newRadial)
+    }
+    this.organizeRadialComponents(this.radials, this.componentsFrame as FrameNode)
   }
 
   public removeRadial(index: number) {
@@ -102,6 +113,13 @@ export class RadialManager {
 
     // Remove radial from radials array
     this.radials.splice(index, 1)
+
+    // Perform housekeeping
+    this.nameRadialNodes(this.radials)
+    if (!this.componentsFrame || this.componentsFrame.removed) {
+      this.componentsFrame = this.createComponentsFrame()
+    }
+    this.organizeRadialComponents(this.radials, this.componentsFrame as FrameNode)
   }
 
   private _createRadial(config: RadialConfig): Radial {
@@ -297,24 +315,24 @@ export class RadialManager {
   }
 
   private removeFromCanvas(radial: Radial) {
-    try {
-      Utils.removeNodes(radial.node, radial.componentSetNode)
-    } catch (e) {
-      console.warn('Error deleting radial node:' + JSON.stringify(e))
-    }
+    try { Utils.removeNodes(radial.node, radial.componentSetNode) } 
+    catch {}
   }
 
-  private initializeComponentsFrame(): FrameNode {
-    if (!this.componentsFrame || this.componentsFrame.removed) {
-      this.componentsFrame = figma.createFrame()
-      this.componentsFrame.name = 'Radial Components'
-      this.componentsFrame.fills = []
-    }
-    this.componentsFrame.layoutMode = 'HORIZONTAL'
-    this.componentsFrame.primaryAxisSizingMode = 'AUTO'
-    this.componentsFrame.counterAxisSizingMode = 'AUTO'
-    this.componentsFrame.itemSpacing = 48
-    return this.componentsFrame
+  private createComponentsFrame(): FrameNode {
+    const componentsFrame = figma.createFrame()
+    componentsFrame.name = 'Radial Components'
+    componentsFrame.fills = []
+    componentsFrame.layoutMode = 'HORIZONTAL'
+    componentsFrame.primaryAxisSizingMode = 'AUTO'
+    componentsFrame.counterAxisSizingMode = 'AUTO'
+    componentsFrame.itemSpacing = 48
+    return componentsFrame
+  }
+
+  private positionComponentsRadial(componentsFrame: FrameNode, radial: Radial) {
+    componentsFrame.x = radial.node.x + radial.node.width + 600
+    componentsFrame.y = radial.node.y
   }
 
   private isRadialOnCanvas(radial: Radial) {
@@ -325,15 +343,22 @@ export class RadialManager {
     return radial.componentSetNode && !radial.componentSetNode.removed
   }
 
-  private nameAndParentRadialNodes() {
+  private nameRadialNodes(radials: Radial[]) {
+    let i = 0
+    while (i < radials.length) {
+      const radial = radials[i]
+      if (this.isRadialOnCanvas(radial)) radial.node.name = 'Radial ' + (i + 1)
+      if (this.isRadialComponentOnCanvas(radial)) radial.componentSetNode.name = 'Radial ' + (i + 1) + ' Segments'
+      i++
+    }
+  }
+
+  private organizeRadialComponents(radials: Radial[], componentsFrame: FrameNode) {
     let i = 0
     let childIndex = 0
-    const componentsFrame = this.initializeComponentsFrame()
-    while (i < this.radials.length) {
-      const radial = this.radials[i]
-      if (this.isRadialOnCanvas(radial)) radial.node.name = 'Radial ' + (i + 1)
+    while (i < radials.length) {
+      const radial = radials[i]
       if (this.isRadialComponentOnCanvas(radial)) {
-        radial.componentSetNode.name = 'Radial ' + (i + 1) + ' Segments'
         componentsFrame.insertChild(childIndex, radial.componentSetNode)
         childIndex++
       }
