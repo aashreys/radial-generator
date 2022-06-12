@@ -1,7 +1,13 @@
 import { IconButton, Text, TextboxNumeric } from "@create-figma-plugin/ui";
 import { Component, h } from "preact";
 import { CopyIcon } from "../icons/icon_copy";
+import { GapIcon } from "../icons/icon_gap";
 import { MinusIcon } from "../icons/icon_minus";
+import { OffsetIcon } from "../icons/icon_offset";
+import { RotateIcon } from "../icons/icon_rotate";
+import { SegmentIcon } from "../icons/icon_segment";
+import { SizeIcon } from "../icons/icon_size";
+import { SweepIcon } from "../icons/icon_sweep";
 import { RadialConfig } from "../models/radial_config";
 
 export class RadialItem extends Component<{name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, RadialConfig> {
@@ -98,7 +104,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           <TextboxNumeric 
           style={'flex-grow: 1;'}
           noBorder
-          icon="S"
+          icon={<SizeIcon />}
           minimum={0}
           incrementBig={10}
           incrementSmall={1}
@@ -111,7 +117,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           <TextboxNumeric 
           style={'flex-grow: 1;'}
           noBorder
-          icon="N"
+          icon={<SegmentIcon />}
           minimum={1}
           incrementBig={2}
           incrementSmall={1}
@@ -124,7 +130,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           <TextboxNumeric 
           style={'flex-grow: 1;'}
           noBorder
-          icon="S"
+          icon={<SweepIcon />}
           minimum={0}
           maximum={360}
           incrementBig={10}
@@ -140,7 +146,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           <TextboxNumeric 
           style={'flex-grow: 1;'}
           noBorder
-          icon="R"
+          icon={<RotateIcon />}
           minimum={0}
           maximum={360}
           incrementBig={10}
@@ -154,7 +160,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           <TextboxNumeric
           style={'flex-grow: 1;'}
           noBorder
-          icon="O"
+          icon={<OffsetIcon />}
           minimum={0}
           maximum={100}
           incrementBig={10}
@@ -168,7 +174,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           <TextboxNumeric 
           style={'flex-grow: 1;'}
           noBorder
-          icon="G"
+          icon={<GapIcon />}
           minimum={0}
           incrementBig={10}
           incrementSmall={1}
