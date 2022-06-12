@@ -18,19 +18,23 @@ export class RadialManager {
   }
 
   public createRadial(): Radial {
+    // Create radial component container since this might be the first radial
+    this.initializeComponentsFrame()
+
     // Create radial
-    const name = 'Radial ' + (this.radials.length + 1)
-    const radial = this._createRadial(name, this.DEFAULT_CONFIG)
+    const radial = this._createRadial(this.DEFAULT_CONFIG)
 
     // Position radial
-    if (this.radials.length > 0) this.centerAtRadial(radial, this.radials[0])
+    if (this.radials.length > 0 && this.isRadialOnCanvas(this.radials[0])) {
+      this.centerAtRadial(radial, this.radials[0]) 
+    }
     else this.centerInViewport(radial)
-
-    // Add components
-    this.initializeComponentsFrame().appendChild(radial.componentSetNode)
 
     // Add to radials list
     this.radials.push(radial)
+
+    // Name and parent radial nodes
+    this.nameAndParentRadialNodes()
 
     return radial
   }
@@ -42,7 +46,7 @@ export class RadialManager {
     
     // Create duplicate radial
     const name = 'Radial ' + (dupeIndex + 1)
-    const dupeRadial = this._createRadial(name, dupeConfig)
+    const dupeRadial = this._createRadial(dupeConfig)
 
     // Position radial
     if (this.isRadialOnCanvas(sourceRadial)) {
@@ -54,11 +58,11 @@ export class RadialManager {
       this.centerInViewport(dupeRadial)
     }
 
-    // Add components
-    this.initializeComponentsFrame().insertChild(dupeIndex, dupeRadial.componentSetNode)
-
     // Add to radials list
     this.radials.splice(dupeIndex, 0, dupeRadial)
+
+    // Name radial nodes
+    this.nameAndParentRadialNodes()
 
     return dupeRadial
   }
@@ -67,8 +71,7 @@ export class RadialManager {
     const oldRadial = this.radials[index]
 
     // Create radial from new config
-    const name = 'Radial ' + (index + 1)
-    const newRadial = this._createRadial(name, newConfig)
+    const newRadial = this._createRadial(newConfig)
     
     // Position radial
     if (this.isRadialOnCanvas(oldRadial)) {
@@ -80,9 +83,6 @@ export class RadialManager {
       this.centerInViewport(newRadial)
     }
 
-    // Add components
-    this.initializeComponentsFrame().insertChild(index, newRadial.componentSetNode)
-
     // Copy visual properties from old radial
     this.copyRadialVisuals(oldRadial, newRadial)
 
@@ -91,6 +91,9 @@ export class RadialManager {
 
     // Remove old radial and components from canvas
     this.removeFromCanvas(oldRadial)
+
+    // Name radial nodes
+    this.nameAndParentRadialNodes()
   }
 
   public removeRadial(index: number) {
@@ -101,13 +104,12 @@ export class RadialManager {
     this.radials.splice(index, 1)
   }
 
-  private _createRadial(name: string, config: RadialConfig): Radial {
+  private _createRadial(config: RadialConfig): Radial {
     const size = this.ensureMinDimension(config.size)
     const gap = config.gap > size ? size : config.gap // gap cannot exceed radial size
     const perSegmentSweep = config.sweep / config.numSegments
 
     const radialContainer = figma.createFrame()
-    radialContainer.name = name
     radialContainer.fills = []
     radialContainer.clipsContent = false
     radialContainer.resize(size, size)
@@ -125,7 +127,6 @@ export class RadialManager {
     radialContainer.appendChild(arc)
 
     const segmentComponents = this.createRadialComponents(arc)
-    segmentComponents.name = name + ' Segments'
     segmentComponents.x = radialContainer.x - segmentComponents.width - 200
     segmentComponents.y = radialContainer.y
 
@@ -322,6 +323,22 @@ export class RadialManager {
 
   private isRadialComponentOnCanvas(radial: Radial) {
     return radial.componentSetNode && !radial.componentSetNode.removed
+  }
+
+  private nameAndParentRadialNodes() {
+    let i = 0
+    let childIndex = 0
+    const componentsFrame = this.initializeComponentsFrame()
+    while (i < this.radials.length) {
+      const radial = this.radials[i]
+      if (this.isRadialOnCanvas(radial)) radial.node.name = 'Radial ' + (i + 1)
+      if (this.isRadialComponentOnCanvas(radial)) {
+        radial.componentSetNode.name = 'Radial ' + (i + 1) + ' Segments'
+        componentsFrame.insertChild(childIndex, radial.componentSetNode)
+        childIndex++
+      }
+      i++
+    }
   }
 
 }
