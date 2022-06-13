@@ -19,7 +19,7 @@
       "figma"
     ],
     "id": "hello-world",
-    "name": "Radial Generator",
+    "name": "Radial Generator [BETA]",
     "main": "src/main.ts",
     "ui": "src/ui.tsx"
   }
