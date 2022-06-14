@@ -10,72 +10,100 @@ import { SizeIcon } from "../icons/icon_size";
 import { SweepIcon } from "../icons/icon_sweep";
 import { RadialConfig } from "../models/radial_config";
 
-export class RadialItem extends Component<{name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, RadialConfig> {
+export class RadialItem extends Component<{name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, any> {
   
   constructor(props: {name: string, config: RadialConfig, onConfigChange: any, onRemoveClick: any, onDuplicateClick: any, style?: string}) {
     super()
-    this.state = props.config
+    this.state = {
+      size: props.config.size.toString(),
+      numSegments: props.config.numSegments.toString(),
+      sweep: props.config.sweep.toString() + '°',
+      rotation: props.config.rotation.toString() + '°',
+      innerOffset: (props.config.innerOffset * 100).toString() + '%',
+      gap: props.config.gap.toString()
+    }
   }
 
   onSizeChange(value: string) {
-    if (!isNaN(parseInt(value))) {
-      this.setState(prevState => ({
-        ...prevState,
-        size: parseInt(value)
-      }), this.onConfigChange)
+    if (this.isNumber(value)) {
+      if (value.length > 0) {
+        this.setState(prevState => ({
+          ...prevState,
+          size: value
+        }), this.onConfigChange)
+      }
     }
   }
 
   onNumSegmentsChange(value: string) {
-    if (!isNaN(parseInt(value))) {
+    if (this.isNumber(value)) {
       this.setState(prevState => ({
         ...prevState,
-        numSegments: parseInt(value)
+        numSegments: value
       }), this.onConfigChange)
     }
   }
 
   onSweepChange(value: string) {
-    if (!isNaN(parseInt(value))) {
+    if (this.isAngle(value)) {
+      console.log(value)
       this.setState(prevState => ({
         ...prevState,
-        sweep: parseInt(value)
+        sweep: value
       }), this.onConfigChange)
     }
   }
 
   onRotationChange(value: string) {
-    if (!isNaN(parseInt(value))) {
+    if (this.isAngle(value)) {
+      console.log(value)
       this.setState(prevState => ({
         ...prevState,
-        rotation: parseInt(value)
+        rotation: value
       }), this.onConfigChange)
     }
   }
 
   onOffsetChange(value: string) {
-    if (!isNaN(parseInt(value))) {
+    if (this.isPercent(value)) {
       this.setState(prevState => ({
         ...prevState,
-        innerOffset: parseInt(value) / 100
+        innerOffset: value
       }), this.onConfigChange)
     }
   }
 
   onGapChange(value: string) {
-    if (!isNaN(parseInt(value))) {
+    if (this.isNumber(value)) {
       this.setState(prevState => ({
         ...prevState,
-        gap: parseInt(value)
+        gap: value
       }), this.onConfigChange)
     }
   }
 
-  onConfigChange() {
-    this.props.onConfigChange(this.state)
+  isAngle(value: string): boolean {
+    return this.isNumber(value, '°')
   }
 
-  render(props: {name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, state: RadialConfig) {
+  isPercent(value: string): boolean {
+    return this.isNumber(value, '%')
+  }
+
+  isNumber(value: string, suffix?: string) {
+    if (!suffix) {
+      return value !== undefined && !isNaN(parseFloat(value))
+    }
+    else {
+      return value !== undefined && value.replace(suffix, '').length > 0 && !isNaN(parseFloat(value))
+    }
+  }
+
+  onConfigChange() {
+    // this.props.onConfigChange(this.state)
+  }
+ 
+  render(props: {name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, state: any) {
     return (
       <div style={'margin-bottom: var(--space-extra-small)'}>
 
@@ -101,6 +129,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
         
 
         <div style='display: flex; margin-bottom: var(--space-extra-small)'>
+
           <TextboxNumeric 
           style={'flex-grow: 1;'}
           noBorder
@@ -108,9 +137,8 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           minimum={0}
           incrementBig={10}
           incrementSmall={1}
-          integer
           onInput={e => this.onSizeChange(e.currentTarget.value)}
-          value={state.size.toString()}  />
+          value={state.size}  />
 
           <div style='width: var(--space-extra-small)'/>
 
@@ -121,9 +149,8 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           minimum={1}
           incrementBig={2}
           incrementSmall={1}
-          integer
           onInput={e => this.onNumSegmentsChange(e.currentTarget.value)}
-          value={state.numSegments.toString()}  />
+          value={state.numSegments}  />
 
           <div style='width: var(--space-extra-small)'/>
 
@@ -135,9 +162,9 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           maximum={360}
           incrementBig={10}
           incrementSmall={1}
-          integer
+          suffix='°'
           onInput={e => this.onSweepChange(e.currentTarget.value)}
-          value={state.sweep.toString()}  />
+          value={state.sweep}  />
 
         </div>
 
@@ -151,9 +178,9 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           maximum={360}
           incrementBig={10}
           incrementSmall={1}
-          integer
+          suffix='°'
           onInput={e => this.onRotationChange(e.currentTarget.value)}
-          value={state.rotation.toString()}  />
+          value={state.rotation}  />
           
           <div style='width: var(--space-extra-small)'/>
 
@@ -165,9 +192,9 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           maximum={100}
           incrementBig={10}
           incrementSmall={1}
-          integer
+          suffix='%'
           onInput={e => this.onOffsetChange(e.currentTarget.value)}
-          value={Math.round((state.innerOffset * 100)).toString()}  />
+          value={state.innerOffset}  />
 
           <div style='width: var(--space-extra-small)'/>
 
@@ -178,9 +205,8 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           minimum={0}
           incrementBig={10}
           incrementSmall={1}
-          integer
           onInput={e => this.onGapChange(e.currentTarget.value)}
-          value={state.gap.toString()}  />
+          value={state.gap}  />
 
         </div>
 
