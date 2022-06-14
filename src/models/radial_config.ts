@@ -4,7 +4,7 @@ export interface RadialConfig {
   numSegments: number
   sweep: number 
   rotation: number
-  innerOffset: number
+  offset: number
   gap: number
 
 }

@@ -19,7 +19,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
       numSegments: props.config.numSegments.toString(),
       sweep: props.config.sweep.toString() + '°',
       rotation: props.config.rotation.toString() + '°',
-      innerOffset: (props.config.innerOffset * 100).toString() + '%',
+      offset: (props.config.offset * 100).toString() + '%',
       gap: props.config.gap.toString()
     }
   }
@@ -68,7 +68,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
     if (this.isPercent(value)) {
       this.setState(prevState => ({
         ...prevState,
-        innerOffset: value
+        offset: value
       }), this.onConfigChange)
     }
   }
@@ -194,7 +194,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           incrementSmall={1}
           suffix='%'
           onInput={e => this.onOffsetChange(e.currentTarget.value)}
-          value={state.innerOffset}  />
+          value={state.offset}  />
 
           <div style='width: var(--space-extra-small)'/>
 

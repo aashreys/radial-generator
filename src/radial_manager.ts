@@ -13,7 +13,7 @@ export class RadialManager {
     numSegments: 6,
     sweep: 360,
     rotation: 0,
-    innerOffset: 0.5,
+    offset: 0.5,
     gap: 10
   }
 
@@ -139,7 +139,7 @@ export class RadialManager {
     const startAngle = gapAngle
     const endAngle = (gapAngle * 2) < perSegmentSweep ? perSegmentSweep - gapAngle : gapAngle
 
-    const ellipse: EllipseNode = this.createEllipseArc(size, startAngle, endAngle, config.innerOffset, 'd9d9d9')
+    const ellipse: EllipseNode = this.createEllipseArc(size, startAngle, endAngle, config.offset, 'd9d9d9')
 
     radialContainer.appendChild(ellipse)
     ellipse.x = ellipse.y = 0
