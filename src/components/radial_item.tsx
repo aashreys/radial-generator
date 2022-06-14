@@ -25,7 +25,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   onSizeChange(value: string) {
-    if (this.isNumber(value)) {
+    if (this.isFloat(value)) {
       if (value.length > 0) {
         this.setState(prevState => ({
           ...prevState,
@@ -36,7 +36,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   onNumSegmentsChange(value: string) {
-    if (this.isNumber(value)) {
+    if (this.isInteger(value)) {
       this.setState(prevState => ({
         ...prevState,
         numSegments: value
@@ -74,7 +74,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   onGapChange(value: string) {
-    if (this.isNumber(value)) {
+    if (this.isFloat(value)) {
       this.setState(prevState => ({
         ...prevState,
         gap: value
@@ -83,15 +83,19 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   isAngle(value: string): boolean {
-    return this.isNumber(value, '°')
+    return this.isFloat(value)
   }
 
   isPercent(value: string): boolean {
-    return this.isNumber(value, '%')
+    return this.isFloat(value)
   }
 
-  isNumber(value: string, suffix?: string): boolean {
+  isFloat(value: string): boolean {
     return value !== undefined && !isNaN(parseFloat(value))
+  }
+
+  isInteger(value: string): boolean {
+    return value !== undefined && !isNaN(parseInt(value))
   }
 
   rolloverAngle(angle: number) {
@@ -153,6 +157,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           minimum={1}
           incrementBig={2}
           incrementSmall={1}
+          integer
           onInput={e => this.onNumSegmentsChange(e.currentTarget.value)}
           value={state.numSegments}  />
 
