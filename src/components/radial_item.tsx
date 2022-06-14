@@ -46,7 +46,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
 
   onSweepChange(value: string) {
     if (this.isAngle(value)) {
-      console.log(value)
+      value = this.rolloverAngle(parseFloat(value)) + '°'
       this.setState(prevState => ({
         ...prevState,
         sweep: value
@@ -56,7 +56,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
 
   onRotationChange(value: string) {
     if (this.isAngle(value)) {
-      console.log(value)
+      value = this.rolloverAngle(parseFloat(value)) + '°'
       this.setState(prevState => ({
         ...prevState,
         rotation: value
@@ -90,12 +90,16 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
     return this.isNumber(value, '%')
   }
 
-  isNumber(value: string, suffix?: string) {
-    if (!suffix) {
-      return value !== undefined && !isNaN(parseFloat(value))
+  isNumber(value: string, suffix?: string): boolean {
+    return value !== undefined && !isNaN(parseFloat(value))
+  }
+
+  rolloverAngle(angle: number) {
+    if (angle >= 0) {
+      return angle % 360
     }
     else {
-      return value !== undefined && value.replace(suffix, '').length > 0 && !isNaN(parseFloat(value))
+      return (angle % 360) + 360
     }
   }
 
@@ -158,8 +162,6 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           style={'flex-grow: 1;'}
           noBorder
           icon={<SweepIcon />}
-          minimum={0}
-          maximum={360}
           incrementBig={10}
           incrementSmall={1}
           suffix='°'
@@ -174,8 +176,6 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
           style={'flex-grow: 1;'}
           noBorder
           icon={<RotateIcon />}
-          minimum={0}
-          maximum={360}
           incrementBig={10}
           incrementSmall={1}
           suffix='°'
