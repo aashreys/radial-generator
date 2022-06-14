@@ -108,7 +108,14 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   onConfigChange() {
-    // this.props.onConfigChange(this.state)
+    this.props.onConfigChange({
+      size: parseFloat(this.state.size),
+      numSegments: parseInt(this.state.numSegments),
+      sweep: parseFloat(this.state.sweep),
+      rotation: parseFloat(this.state.rotation),
+      offset: parseFloat(this.state.offset) / 100,
+      gap: parseFloat(this.state.gap)
+    })
   }
  
   render(props: {name: string, config: RadialConfig, onRemoveClick: any, onDuplicateClick: any, onConfigChange: any, style?: string}, state: any) {
