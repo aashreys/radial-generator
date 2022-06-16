@@ -45,6 +45,7 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   onSweepChange(value: string) {
+    console.log(value)
     if (this.isAngle(value)) {
       value = this.rolloverAngle(parseFloat(value)) + '°'
       this.setState(prevState => ({
@@ -100,10 +101,10 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
 
   rolloverAngle(angle: number) {
     if (angle >= 0) {
-      return angle % 360
+      return angle % 361 // 360 and 0 represent the same value, but full vs. empty radial sweeps, so we actually have 361 angle values to represent
     }
     else {
-      return (angle % 360) + 360
+      return (angle % 361) + 361
     }
   }
 
