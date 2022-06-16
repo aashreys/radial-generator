@@ -45,7 +45,6 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
   }
 
   onSweepChange(value: string) {
-    console.log(value)
     if (this.isAngle(value)) {
 
       if (value.indexOf('°') >= 0)  value = this.rolloverAngle(parseFloat(value)) + '°' 
@@ -73,7 +72,6 @@ export class RadialItem extends Component<{name: string, config: RadialConfig, o
 
   onOffsetChange(value: string) {
     if (this.isPercent(value)) {
-      console.log(value)
       this.setState(prevState => ({
         ...prevState,
         offset: value
