@@ -21,6 +21,9 @@
     "id": "1118321937703348544",
     "name": "Radial Generator [BETA]",
     "main": "src/main.ts",
-    "ui": "src/ui.tsx"
+    "ui": "src/ui.tsx",
+    "networkAccess": {
+      "allowedDomains": ["none"]
+    }
   }
 }
