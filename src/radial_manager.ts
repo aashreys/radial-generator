@@ -214,7 +214,7 @@ export class RadialManager {
 
     unfocusedComponent.reactions = [
       {
-        action: {
+        actions: [{ 
           type: 'NODE',
           destinationId: focusedComponent.id,
           navigation: 'CHANGE_TO',
@@ -224,7 +224,7 @@ export class RadialManager {
             duration: 0.3 // 300ms
           },
           preserveScrollPosition: false
-        },
+        }],
         trigger: {
           type: 'ON_HOVER'
         }

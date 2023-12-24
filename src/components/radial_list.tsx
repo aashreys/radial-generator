@@ -16,11 +16,11 @@ function AddSection(props: any) {
     margin-bottom: 2px; 
     align-items: center'>
 
-      <Text bold style={'flex-grow: 1'}>
-        {props.title}
+      <Text style={'flex-grow: 1'}>
+        <b>{props.title}</b>
       </Text>
 
-      <IconButton onClick={props.onAddClick} value={false} >
+      <IconButton onClick={props.onAddClick} >
         <PlusIcon />
       </IconButton>
 
