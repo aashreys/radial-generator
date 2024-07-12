@@ -211,10 +211,10 @@ export class RadialManager {
     componentSet.counterAxisSizingMode = 'AUTO'
     componentSet.itemSpacing = 48
     componentSet.verticalPadding = componentSet.horizontalPadding = 48
-
-    unfocusedComponent.reactions = [
+    
+    unfocusedComponent.setReactionsAsync([
       {
-        actions: [{ 
+        actions: [{
           type: 'NODE',
           destinationId: focusedComponent.id,
           navigation: 'CHANGE_TO',
@@ -229,7 +229,7 @@ export class RadialManager {
           type: 'ON_HOVER'
         }
       }
-    ]
+    ])
 
     return componentSet
   }

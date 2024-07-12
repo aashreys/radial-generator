@@ -24,6 +24,7 @@
     "ui": "src/ui.tsx",
     "networkAccess": {
       "allowedDomains": ["none"]
-    }
+    },
+    "documentAccess": "dynamic-page"
   }
 }
